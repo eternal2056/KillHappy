@@ -1,20 +1,30 @@
-// ConsoleApplication1.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
+#include <chrono>
+#include <thread>
 
-int main()
-{
-    std::cout << "Hello World!\n";
+// 函数用于检查是否已经到达特定的时间点
+bool isTimeReached(std::chrono::system_clock::time_point targetTime) {
+	std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
+	return currentTime >= targetTime;
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
+int main() {
+	// 获取当前时间点
+	std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
 
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+	// 设置目标时间点（这里设置为当前时间点加上5秒）
+	std::chrono::seconds timeOffset(5); // 设置5秒的时间间隔
+	std::chrono::system_clock::time_point targetTime = currentTime + timeOffset;
+
+	std::cout << "等待到达目标时间..." << std::endl;
+
+	// 检查是否已经到达目标时间点
+	while (!isTimeReached(targetTime)) {
+		// 这里可以添加其他任务，或者只是简单地等待
+		std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 每100毫秒检查一次
+	}
+
+	std::cout << "已经到达目标时间点！" << std::endl;
+
+	return 0;
+}
