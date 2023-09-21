@@ -14,5 +14,7 @@ Testing.
 1. ChatGPT(V3.5)
 2. https://www.freebuf.com/articles/system/220061.html
 3. https://drunkmars.top/2021/10/01/dll%E6%B3%A8%E5%85%A5/
-4. https://github.com/TsudaKageyu/minhook // Building MinHook - Using vcpkg && Build lib && Copy to project.
-5. https://github.com/microsoft/vcpkg
+4. MinHook:
+   1. https://github.com/TsudaKageyu/minhook // Building MinHook - Using vcpkg && Build lib && Copy to project.
+   2. https://github.com/microsoft/vcpkg
+   3. https://blog.csdn.net/CodeBowl/article/details/120802315
