@@ -4,11 +4,14 @@ For our respective dreams, kill happiness and get the most extreme.
 # Todo
 Testing.
 
+# Version V1.0
+1. Scan process for get some name and restart operating system.
+
+# Version V2.0
 1. We need time modules.
    1. Close time modify.
    2. Get internet time to change local time.
    3. Get true time in no internet environtment.
-
 
 # Reference
 1. ChatGPT(V3.5)
