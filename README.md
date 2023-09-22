@@ -1,19 +1,19 @@
-# KillHappy
+# 0x1000 KillHappy
 For our respective dreams, kill happiness and get the most extreme.
 
-# Todo
+# 0x2000 Todo
 Testing.
 
-## Version V1.0
+## 0x2100 Version V1.0
 1. Scan process for get some name and restart operating system.
 
-## Version V2.0
+## 0x2200 Version V2.0
 1. We need time modules.
    1. Close time modify.
    2. Get internet time to change local time.
    3. Get true time in no internet environtment.
 
-# Reference
+# 0xFFFF Reference
 1. ChatGPT(V3.5)
 2. https://www.freebuf.com/articles/system/220061.html
 3. https://drunkmars.top/2021/10/01/dll%E6%B3%A8%E5%85%A5/
