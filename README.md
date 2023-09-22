@@ -30,3 +30,5 @@ Testing.
 5. Magisk:
    1. https://miuiver.com/install-magisk-via-twrp/
    2. https://zhuanlan.zhihu.com/p/482779624
+6. IOS Root Privilege
+   1. https://blog.51cto.com/u_16099212/6440158
