@@ -32,3 +32,5 @@ Testing.
    2. https://zhuanlan.zhihu.com/p/482779624
 6. IOS Root Privilege
    1. https://blog.51cto.com/u_16099212/6440158
+7. No Root Solution
+   1. https://developer.android.com/guide/topics/ui/accessibility/service
