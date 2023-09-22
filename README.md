@@ -27,3 +27,6 @@ Testing.
    1. https://github.com/TsudaKageyu/minhook // Building MinHook - Using vcpkg && Build lib && Copy to project.
    2. https://github.com/microsoft/vcpkg
    3. https://blog.csdn.net/CodeBowl/article/details/120802315
+5. Magisk:
+   1. https://miuiver.com/install-magisk-via-twrp/
+   2. https://zhuanlan.zhihu.com/p/482779624
