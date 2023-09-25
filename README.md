@@ -35,3 +35,4 @@ Testing.
    1. https://blog.51cto.com/u_16099212/6440158
 7. Anroid No Root Solution
    1. https://developer.android.com/guide/topics/ui/accessibility/service
+8. Modify Dll errors: https://blog.csdn.net/VBcom/article/details/6962388
