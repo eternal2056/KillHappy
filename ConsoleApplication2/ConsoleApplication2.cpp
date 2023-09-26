@@ -57,7 +57,7 @@ int main()
 
     if (result == IDYES) {
         
-        // 用户点击了"是"按钮，执行关机操作（需要管理员权限）
+        // 用户点击了"是"按钮，执行关机操作（需要管理员权限）1
         if (ExitWindowsEx(EWX_SHUTDOWN, SHTDN_REASON_MAJOR_OPERATINGSYSTEM | SHTDN_REASON_MINOR_UPGRADE | SHTDN_REASON_FLAG_PLANNED)) {
             // 关机操作成功
             std::wcout << "进程ID " << pe32.th32ProcessID << "\t111: " << pe32.szExeFile << std::endl;
