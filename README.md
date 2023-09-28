@@ -5,6 +5,8 @@ For our respective dreams, kill happiness and get the most extreme.
 1. Make a while list. (Use MD5, Path)
 2. How to get while process. How to get system process and necessary process.
 
+1. Forbit some host network to prevent watch video.
+
 ## 0x1100 Windows
 ### 0x1110 Version V1.0
 1. Scan process for get some name and restart operating system.
