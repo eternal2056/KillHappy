@@ -2,7 +2,8 @@
 For our respective dreams, kill happiness and get the most extreme.
 
 # 0x1000 Todo
-Testing.
+1. Make a while list.
+2. How to get while process. How to get system process and necessary process.
 
 ## 0x1100 Windows
 ### 0x1110 Version V1.0
