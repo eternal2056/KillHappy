@@ -39,3 +39,4 @@ Testing.
    1. https://blog.csdn.net/VBcom/article/details/6962388
    2. https://dl.3dmgame.com/patch/89066.html
    3. Manual copy to Windows/System32 and Windows/SysWOW64
+9. Close system: https://blog.csdn.net/moreorless/article/details/2147131
