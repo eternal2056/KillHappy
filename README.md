@@ -2,7 +2,7 @@
 For our respective dreams, kill happiness and get the most extreme.
 
 # 0x1000 Todo
-1. Make a while list.
+1. Make a while list. (Use MD5, Path)
 2. How to get while process. How to get system process and necessary process.
 
 ## 0x1100 Windows
