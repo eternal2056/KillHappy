@@ -39,7 +39,7 @@
 
 typedef int (WINAPI* MESSAGEBOXW)(HWND, LPCWSTR, LPCWSTR, UINT);
 
-// Pointer for calling original MessageBoxW.
+// Pointer for calling original MessageBoxW. 
 MESSAGEBOXW fpMessageBoxW = NULL;
 
 // Detour function which overrides MessageBoxW.
