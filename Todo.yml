@@ -4,11 +4,14 @@
 # 但是老版本的技术过于丑陋，会导致cpu飙升。
 # 所以新方法是 在R0层通过过滤驱动的方式，劫持了A.exe进程发送的数据包
 
-Npcap: 失败了 # 因为只能获取包，不能拦截包。
+Npcap: 
+  - 失败了 # 因为只能获取包，不能拦截包。
+  - 好像 Wireshark都不能拦截? # https://www.zhihu.com/question/296876516
 TUN: 有待尝试，因为过于丑陋，优先级并不高。
 R0层通过过滤驱动的方式: # 尝试中。
 
 
 Reference:
   请问下 Proxifier 的原理是什么?: https://www.zhihu.com/question/296876516
-  
+  详解云计算网络底层技术——虚拟网络设备 tap/tun 原理解析: https://cloud.tencent.com/developer/article/1432451
+  真-全局代理原理细谈: https://blog.csdn.net/qq_29656325/article/details/125887966
