@@ -9,7 +9,7 @@ Npcap:
   - 好像 Wireshark都不能拦截? # https://www.zhihu.com/question/296876516
 TUN: 有待尝试，因为过于丑陋，优先级并不高。
 R0层通过过滤驱动的方式: # 尝试中。
-
+Fidder: 设置系统代理，设置为 Fidder 的8888端口。
 
 Reference:
   请问下 Proxifier 的原理是什么?: https://www.zhihu.com/question/296876516
