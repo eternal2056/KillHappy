@@ -18,6 +18,10 @@ For our respective dreams, kill happiness and get the most extreme.
    2. Get internet time to change local time.
    3. Get true time in no internet environtment.
 
+### 0x1130 Network
+1. Npcap
+2. Proxifier
+3. TUN
 ## 0x1200 Android
 1. We need to get root privilege with Magisk.
 
