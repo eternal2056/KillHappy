@@ -83,6 +83,7 @@ int WINAPI MyWSASend(
     OutputDebugString(L"WSASend Hooked!\n");
     GetPeerInfo(s);
     // Call the original WSASend
+
     return oWSASend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine);
 }
 
@@ -96,28 +97,75 @@ int WINAPI HookedSendTo(SOCKET s, const char* buf, int len, int flags, const str
     return originalSendTo(s, buf, len, flags, to, tolen);
 }
 
+BOOL HookWSASend()
+{
+    // Create a hook for MessageBoxW, in disabled state.
+    if (MH_CreateHook(&WSASend, &MyWSASend, reinterpret_cast<LPVOID*>(&oWSASend)) != MH_OK) {
+        return 1;
+    }
+
+    // Enable the hook
+    if (MH_EnableHook(&WSASend) != MH_OK) {
+        return 1;
+    }
+}
+#include <winhttp.h>
+// 定义原始函数指针类型
+typedef HINTERNET(WINAPI* WinHttpOpenRequest_t)(HINTERNET hConnect, LPCWSTR pwszVerb, LPCWSTR pwszObjectName,
+    LPCWSTR pwszVersion, LPCWSTR pwszReferrer, LPCWSTR* ppwszAcceptTypes, DWORD dwFlags);
+
+// 原始函数指针
+WinHttpOpenRequest_t originalWinHttpOpenRequest = nullptr;
+
+// 自定义的 hook 函数
+HINTERNET WINAPI hookedWinHttpOpenRequest(HINTERNET hConnect, LPCWSTR pwszVerb, LPCWSTR pwszObjectName,
+    LPCWSTR pwszVersion, LPCWSTR pwszReferrer, LPCWSTR* ppwszAcceptTypes, DWORD dwFlags) {
+    // 在这里执行你的自定义逻辑
+    WriteToLogFile(L"hookedWinHttpOpenRequest");
+
+    // 调用原始函数
+    return originalWinHttpOpenRequest(hConnect, pwszVerb, pwszObjectName, pwszVersion, pwszReferrer, ppwszAcceptTypes, dwFlags);
+}
+
+BOOL HookWinHttpOpenRequest()
+{
+    // 创建钩取点
+    if (MH_CreateHookApi(L"winhttp.dll", "WinHttpOpenRequest", &hookedWinHttpOpenRequest, reinterpret_cast<LPVOID*>(&originalWinHttpOpenRequest)) != MH_OK) {
+        return -1;
+    }
+
+    // 启用钩取
+    if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
+        return -1;
+    }
+}
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
                      )
 {
+    int i = 1;
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
         // Initialize MinHook.
-        MessageBox(NULL, L"This Is From Dll!\nInject Success!", L"OK", MB_OK);
         MH_Initialize();
-
-        // Create a hook for MessageBoxW, in disabled state.
-        if (MH_CreateHook(&WSASend, &MyWSASend, reinterpret_cast<LPVOID*>(&oWSASend)) != MH_OK) {
-            return 1;
+        MessageBox(NULL, L"This Is From Dll!\nInject Success!", L"OK", MB_OK);
+        switch (i) {
+        case 1:
+            HookWSASend();
+            break;
+        case 2:
+            HookWinHttpOpenRequest();
+            break;
+        case 3:
+            HookWSASend();
+            break;
+        default:
+            HookWSASend();
         }
 
-        // Enable the hook
-        if (MH_EnableHook(&WSASend) != MH_OK) {
-            return 1;
-        }
         MessageBoxW(NULL, L"hooked!", L"MinHook Sample", MB_OK);
         break;
     case DLL_THREAD_ATTACH:
