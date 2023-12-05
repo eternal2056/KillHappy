@@ -1,54 +1,89 @@
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#include <iostream>
-#include <thread> // 包含用于 sleep 的头文件
+#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
+#undef UNICODE
 
-#pragma comment(lib, "Ws2_32.lib") // 链接到 Winsock 库
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <stdio.h>
 
-int main() {
-    // 初始化 Winsock
+// link with Ws2_32.lib
+#pragma comment (lib, "Ws2_32.lib")
+int __cdecl main(int argc, char** argv)
+{
+
+    //-----------------------------------------
+    // Declare and initialize variables
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "Failed to initialize Winsock\n";
+    int iResult;
+    INT iRetval;
+
+    DWORD dwRetval;
+
+    int i = 1;
+
+    struct addrinfo* result = NULL;
+    struct addrinfo* ptr = NULL;
+    struct addrinfo hints;
+
+    struct sockaddr_in* sockaddr_ipv4;
+    //    struct sockaddr_in6 *sockaddr_ipv6;
+    LPSOCKADDR sockaddr_ip;
+
+    char ipstringbuffer[46];
+    DWORD ipbufferlength = 46;
+
+    // Validate the parameters
+    // Initialize Winsock
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0) {
+        printf("WSAStartup failed: %d\n", iResult);
         return 1;
     }
 
-    // 创建套接字
-    SOCKET sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (sock == INVALID_SOCKET) {
-        std::cerr << "Failed to create socket\n";
+    //--------------------------------
+    // Setup the hints address info structure
+    // which is passed to the getaddrinfo() function
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    dwRetval = getaddrinfo("www.bilibili.com", 0, &hints, &result);
+    if (dwRetval != 0) {
+        printf("getaddrinfo failed with error: %d\n", dwRetval);
         WSACleanup();
         return 1;
     }
 
-    // 设置目标地址和端口
-    sockaddr_in targetAddr;
-    targetAddr.sin_family = AF_INET;
-    targetAddr.sin_port = htons(12345); // 你的目标端口
-    inet_pton(AF_INET, "127.0.0.1", &(targetAddr.sin_addr)); // 你的目标 IP 地址
+    // Retrieve each address and print out the hex bytes
+    for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
+        switch (ptr->ai_family) {
+        case AF_INET:
+            sockaddr_ipv4 = (struct sockaddr_in*)ptr->ai_addr;
+            printf("IPv4 address %s\n",
+                inet_ntoa(sockaddr_ipv4->sin_addr));
+            break;
+        case AF_INET6:
+            // the InetNtop function is available on Windows Vista and later
+            // sockaddr_ipv6 = (struct sockaddr_in6 *) ptr->ai_addr;
+            // printf("\tIPv6 address %s\n",
+            //    InetNtop(AF_INET6, &sockaddr_ipv6->sin6_addr, ipstringbuffer, 46) );
 
-    // 准备要发送的数据
-    const char* dataToSend = "Hello, UDP World!";
-
-    // 设置循环标志
-    bool shouldRun = true;
-
-    while (shouldRun) {
-        // 使用 sendto 发送数据
-        int result = sendto(sock, dataToSend, strlen(dataToSend), 0, (const sockaddr*)&targetAddr, sizeof(targetAddr));
-        if (result == SOCKET_ERROR) {
-            std::cerr << "Failed to send data: " << WSAGetLastError() << "\n";
+            // We use WSAAddressToString since it is supported on Windows XP and later
+            sockaddr_ip = (LPSOCKADDR)ptr->ai_addr;
+            // The buffer length is changed by each call to WSAAddresstoString
+            // So we need to set it for each iteration through the loop for safety
+            ipbufferlength = 46;
+            iRetval = WSAAddressToString(sockaddr_ip, (DWORD)ptr->ai_addrlen, NULL,
+                ipstringbuffer, &ipbufferlength);
+            if (iRetval)
+                printf("WSAAddressToString failed with %u\n", WSAGetLastError());
+            else
+                printf("IPv6 address %s\n", ipstringbuffer);
+            break;
         }
-        else {
-            std::cout << "Data sent successfully\n";
-        }
-
-        // 暂停 3 秒钟
-        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
-    // 关闭套接字和清理 Winsock
-    closesocket(sock);
+    freeaddrinfo(result);
     WSACleanup();
 
     return 0;
