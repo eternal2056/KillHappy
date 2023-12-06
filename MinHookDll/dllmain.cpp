@@ -178,10 +178,10 @@ void GetPeerInfo(SOCKET s)
 	{
 		char ip[INET_ADDRSTRLEN];
 		inet_ntop(AF_INET, &peerAddr.sin_addr, ip, INET_ADDRSTRLEN);
+		std::vector<std::string> addressList = getIPsByDomain(urlName);
 
 		std::string str(ip);
 		if (str != "127.0.0.1") {
-			std::vector<std::string> addressList = getIPsByDomain(urlName);
 			std::string allAddressString = "DestIp: " + str + " allAddressString:";
 			for (std::string ipAddress : addressList) {
 				if (str == ipAddress) {
@@ -209,7 +209,6 @@ void GetPeerInfo(SOCKET s)
 
 		std::string str = ipv6;
 		if (str != "::cccc:cccc:cccc:cccc") {
-			std::vector<std::string> addressList = getIPsByDomain(urlName);
 			std::string allAddressString = "DestIp: " + str + " allAddressString:";
 			for (std::string ipAddress : addressList) {
 				if (str == ipAddress) {
