@@ -176,11 +176,18 @@ void GetPeerInfo(SOCKET s)
 		inet_ntop(AF_INET, &peerAddr.sin_addr, ip, INET_ADDRSTRLEN);
 
 		std::string str(ip);
+		bool isMatched = false;
 		if (str != "127.0.0.1") {
-			std::vector<std::string> addressList = getIPsByDomain("www.baidu.com");
+			std::vector<std::string> addressList = getIPsByDomain("www.bilibili.com");
 			std::string allAddressString = "DestIp: " + str + " allAddressString:";
 			for (std::string ipAddress : addressList) {
+				if (str == ipAddress) {
+					isMatched = true;
+				}
 				allAddressString += " | " + ipAddress;
+			}
+			if (isMatched) {
+				allAddressString = "[isMatched] " + allAddressString;
 			}
 			WriteToLogFile(allAddressString);
 		}
