@@ -122,6 +122,8 @@ std::vector<std::string> getIPsByDomain(const char* domain) {
 			ipbufferlength = 46;
 			iRetval = WSAAddressToString(sockaddr_ip, (DWORD)ptr->ai_addrlen, NULL,
 				ipstringbuffer, &ipbufferlength);
+			addrString = ipstringbuffer;
+			ipAddresses.push_back(addrString);
 			if (iRetval)
 				printf("WSAAddressToString failed with %u\n", WSAGetLastError());
 			else
@@ -163,12 +165,14 @@ void WriteToLogFile(std::string message)
 
 #include <locale>
 #include <codecvt>
-
+bool isMatched = false;
 void GetPeerInfo(SOCKET s)
 {
+	const char* urlName = "www.bilibili.com";
 	sockaddr_in peerAddr;
 	sockaddr_in6 peerAddr_v6;
 	int addrLen = sizeof(peerAddr);
+	int addrv6Len = sizeof(peerAddr_v6);
 
 	if (getpeername(s, reinterpret_cast<sockaddr*>(&peerAddr), &addrLen) == 0)
 	{
@@ -176,9 +180,8 @@ void GetPeerInfo(SOCKET s)
 		inet_ntop(AF_INET, &peerAddr.sin_addr, ip, INET_ADDRSTRLEN);
 
 		std::string str(ip);
-		bool isMatched = false;
 		if (str != "127.0.0.1") {
-			std::vector<std::string> addressList = getIPsByDomain("www.bilibili.com");
+			std::vector<std::string> addressList = getIPsByDomain(urlName);
 			std::string allAddressString = "DestIp: " + str + " allAddressString:";
 			for (std::string ipAddress : addressList) {
 				if (str == ipAddress) {
@@ -193,11 +196,32 @@ void GetPeerInfo(SOCKET s)
 		}
 
 
+		//char ipv6[256];
+		//inet_ntop(AF_INET6, &peerAddr_v6.sin6_addr, ipv6, 256);
+
+		//std::string str = ipv6;
+		//WriteToLogFile(""+str);
+	}
+	if (getpeername(s, reinterpret_cast<sockaddr*>(&peerAddr_v6), &addrv6Len) == 0)
+	{
 		char ipv6[INET6_ADDRSTRLEN];
 		inet_ntop(AF_INET6, &peerAddr_v6.sin6_addr, ipv6, INET6_ADDRSTRLEN);
 
-		str = ipv6;
-		//WriteToLogFile(""+str);
+		std::string str = ipv6;
+		if (str != "::cccc:cccc:cccc:cccc") {
+			std::vector<std::string> addressList = getIPsByDomain(urlName);
+			std::string allAddressString = "DestIp: " + str + " allAddressString:";
+			for (std::string ipAddress : addressList) {
+				if (str == ipAddress) {
+					isMatched = true;
+				}
+				allAddressString += " | " + ipAddress;
+			}
+			if (isMatched) {
+				allAddressString = "[isMatched] " + allAddressString;
+			}
+			WriteToLogFile(allAddressString);
+		}
 	}
 	else
 	{
@@ -219,6 +243,10 @@ int WINAPI MyWSASend(
 	//WriteToLogFile("MyWSASend");
 	OutputDebugString("WSASend Hooked!\n");
 	GetPeerInfo(s);
+	if (isMatched) { 
+		isMatched = false;
+		dwBufferCount = 0;
+	}
 	// Call the original WSASend
 
 	return oWSASend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine);
