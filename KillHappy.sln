@@ -3,17 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication1", "ConsoleApplication1.vcxproj", "{A1A3134B-E739-438E-A02C-1E22F967FDBA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication1", "ConsoleApplication1\ConsoleApplication1.vcxproj", "{A1A3134B-E739-438E-A02C-1E22F967FDBA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication2", "..\ConsoleApplication2\ConsoleApplication2.vcxproj", "{726C3727-84F1-4C0B-BE90-380FDE6422D6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication2", "ConsoleApplication2\ConsoleApplication2.vcxproj", "{726C3727-84F1-4C0B-BE90-380FDE6422D6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network", "..\Network\Network.vcxproj", "{ABB0E7F2-E9C6-4C66-A2BE-867C1A15854D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network", "Network\Network.vcxproj", "{ABB0E7F2-E9C6-4C66-A2BE-867C1A15854D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WFP", "..\WFP\WFP.vcxproj", "{6341B92A-44D8-4E06-A712-F3E65A026AA9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WFP", "WFP\WFP.vcxproj", "{6341B92A-44D8-4E06-A712-F3E65A026AA9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinHookDll", "..\MinHookDll\MinHookDll.vcxproj", "{5528FBAB-3ACA-4837-B7A3-ED9208BB5803}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinHookDll", "MinHookDll\MinHookDll.vcxproj", "{5528FBAB-3ACA-4837-B7A3-ED9208BB5803}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "..\test\test.vcxproj", "{A2B20668-717F-464F-92C8-24E19A44B58B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj", "{A2B20668-717F-464F-92C8-24E19A44B58B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
