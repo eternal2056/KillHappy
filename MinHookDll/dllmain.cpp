@@ -7,6 +7,7 @@
 #include "MinHook.h"
 #include <fstream>
 #include <vector>
+#include <string>
 
 #pragma comment(lib, "ws2_32.lib")
 #if defined _M_X64
@@ -18,44 +19,7 @@ void WriteToLogFile(std::string message);
 // 函数定义
 std::vector<std::string> getIPsByDomain(const char* domain) {
 	std::vector<std::string> ipAddresses;
-	//WriteToLogFile("getIPsByDomain");
 
-	//struct addrinfo hints, * res, * p;
-	//int status;
-
-	//memset(&hints, 0, sizeof hints);
-	//hints.ai_family = AF_UNSPEC;
-	//hints.ai_socktype = SOCK_STREAM;
-
-	//if ((status = getaddrinfo(domain, NULL, &hints, &res)) != 0) {
-	//    return ipAddresses; // 返回空数组表示失败
-	//}
-
-	//for (p = res; p != nullptr; p = p->ai_next) {
-	//    void* addr;
-	//    char ipstr[INET6_ADDRSTRLEN];
-
-	//    if (p->ai_family == AF_INET) {
-	//        struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;
-	//        addr = &(ipv4->sin_addr);
-	//    }
-	//    else {
-	//        struct sockaddr_in6* ipv6 = (struct sockaddr_in6*)p->ai_addr;
-	//        addr = &(ipv6->sin6_addr);
-	//    }
-
-	//    inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-	//    ipAddresses.push_back(ipstr);
-	//}
-
-	//freeaddrinfo(res);
-
-	//return ipAddresses;
-
-
-
-
-	//-----------------------------------------
 	// Declare and initialize variables
 	WSADATA wsaData;
 	int iResult;
@@ -83,9 +47,7 @@ std::vector<std::string> getIPsByDomain(const char* domain) {
 		return ipAddresses;
 	}
 
-	//--------------------------------
-	// Setup the hints address info structure
-	// which is passed to the getaddrinfo() function
+
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -110,15 +72,7 @@ std::vector<std::string> getIPsByDomain(const char* domain) {
 			ipAddresses.push_back(addrString);
 			break;
 		case AF_INET6:
-			// the InetNtop function is available on Windows Vista and later
-			// sockaddr_ipv6 = (struct sockaddr_in6 *) ptr->ai_addr;
-			// printf("\tIPv6 address %s\n",
-			//    InetNtop(AF_INET6, &sockaddr_ipv6->sin6_addr, ipstringbuffer, 46) );
-
-			// We use WSAAddressToString since it is supported on Windows XP and later
 			sockaddr_ip = (LPSOCKADDR)ptr->ai_addr;
-			// The buffer length is changed by each call to WSAAddresstoString
-			// So we need to set it for each iteration through the loop for safety
 			ipbufferlength = 46;
 			iRetval = WSAAddressToString(sockaddr_ip, (DWORD)ptr->ai_addrlen, NULL,
 				ipstringbuffer, &ipbufferlength);
@@ -166,23 +120,30 @@ void WriteToLogFile(std::string message)
 #include <locale>
 #include <codecvt>
 bool isMatched = false;
-void GetPeerInfo(SOCKET s)
+void GetPeerInfo(SOCKET s, LPWSABUF  lpBuffers, DWORD dwBufferCount)
 {
-	const char* urlName = "www.bilibili.com";
+	const char* urlName = "www.douyu.com";
 	sockaddr_in peerAddr;
 	sockaddr_in6 peerAddr_v6;
 	int addrLen = sizeof(peerAddr);
 	int addrv6Len = sizeof(peerAddr_v6);
-
+	std::string allAddressString;
+	std::vector<std::string> addressList;
+	addressList = getIPsByDomain(urlName);
 	if (getpeername(s, reinterpret_cast<sockaddr*>(&peerAddr), &addrLen) == 0)
 	{
+		//if (reinterpret_cast<sockaddr*>(&peerAddr)->sa_family == AF_INET) {
+		//	WriteToLogFile("AF_INET");
+		//}
+		//else if (reinterpret_cast<sockaddr*>(&peerAddr)->sa_family == AF_INET6) {
+		//	WriteToLogFile("AF_INET6");
+		//}
 		char ip[INET_ADDRSTRLEN];
 		inet_ntop(AF_INET, &peerAddr.sin_addr, ip, INET_ADDRSTRLEN);
-		std::vector<std::string> addressList = getIPsByDomain(urlName);
 
 		std::string str(ip);
 		if (str != "127.0.0.1") {
-			std::string allAddressString = "DestIp: " + str + " allAddressString:";
+			allAddressString = "DestIp: " + str + " allAddressString:";
 			for (std::string ipAddress : addressList) {
 				if (str == ipAddress) {
 					isMatched = true;
@@ -193,6 +154,48 @@ void GetPeerInfo(SOCKET s)
 				allAddressString = "[isMatched] " + allAddressString;
 			}
 			WriteToLogFile(allAddressString);
+		}
+		else {
+			std::vector<std::string> bufferContents;
+
+			//WriteToLogFile("dwBufferCount" + std::to_string(dwBufferCount));
+			// 遍历缓冲区数组，将每个缓冲区的内容存储到 vector 中
+			for (DWORD i = 0; i < dwBufferCount; ++i) {
+				// 假设 lpBuffers[i].buf 是一个以null结尾的字符数组
+				std::string testString = "";
+				char* myUnsignedCharPointer = new char[lpBuffers[i].len + 1];
+				int k = 0;
+				for (int j = 0; j < lpBuffers[i].len; j++) {
+					unsigned char tempChar = lpBuffers[i].buf[j];
+					if (tempChar >= 33 && tempChar <= 125) {
+						myUnsignedCharPointer[k++] = lpBuffers[i].buf[j];
+					}
+					testString += std::to_string(lpBuffers[i].buf[j]) + " ";
+				}
+				myUnsignedCharPointer[k] = 0;
+				//WriteToLogFile("testString: " + testString);
+				bufferContents.push_back(myUnsignedCharPointer);
+				//bufferContents.push_back(lpBuffers[i].buf);
+				//WriteToLogFile("lpBuffers[i].len" + std::to_string(lpBuffers[i].len));
+				delete[] myUnsignedCharPointer;
+			}
+
+			// 将 vector 中的字符串连接起来
+			std::string resultString;
+			for (std::string content : bufferContents) {
+				resultString += content;
+
+			}
+			//WriteToLogFile("resultString.length()" + std::to_string(resultString.length()));
+			std::string matchUrlName = "google.com";
+			if (resultString.find("google.com") != resultString.npos) {
+				isMatched = true;
+				WriteToLogFile("[isMatched] DestIp: 127.0.0.1 | " + resultString);
+			}
+			else if (resultString.find("gstatic.com") != resultString.npos) {
+				isMatched = true;
+				WriteToLogFile("[isMatched] DestIp: 127.0.0.1 | " + resultString);
+			}
 		}
 
 
@@ -209,7 +212,7 @@ void GetPeerInfo(SOCKET s)
 
 		std::string str = ipv6;
 		if (str != "::cccc:cccc:cccc:cccc") {
-			std::string allAddressString = "DestIp: " + str + " allAddressString:";
+			allAddressString = "DestIp: " + str + " allAddressString:";
 			for (std::string ipAddress : addressList) {
 				if (str == ipAddress) {
 					isMatched = true;
@@ -241,11 +244,13 @@ int WINAPI MyWSASend(
 	//MessageBoxW(NULL, L"MyWSASend", L"MinHook Sample", MB_OK);
 	//WriteToLogFile("MyWSASend");
 	OutputDebugString("WSASend Hooked!\n");
-	GetPeerInfo(s);
+	GetPeerInfo(s, lpBuffers, dwBufferCount);
 	if (isMatched) { 
 		isMatched = false;
 		dwBufferCount = 0;
 	}
+
+
 	// Call the original WSASend
 
 	return oWSASend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine);
@@ -256,7 +261,7 @@ int WINAPI MyWSASend(
 // 定义钩子后的回调函数
 int WINAPI HookedSendTo(SOCKET s, const char* buf, int len, int flags, const struct sockaddr* to, int tolen)
 {
-	MessageBoxW(NULL, L"HookedSendTo", L"MinHook Sample", MB_OK);
+	//MessageBoxW(NULL, L"HookedSendTo", L"MinHook Sample", MB_OK);
 	OriginalSendTo originalSendTo = s_sendto1;
 	return originalSendTo(s, buf, len, flags, to, tolen);
 }
@@ -315,7 +320,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	case DLL_PROCESS_ATTACH:
 		// Initialize MinHook.
 		MH_Initialize();
-		MessageBox(NULL, "This Is From Dll!\nInject Success!", "OK", MB_OK);
+		//MessageBox(NULL, "This Is From Dll!\nInject Success!", "OK", MB_OK);
 		switch (i) {
 		case 1:
 			HookWSASend();
@@ -330,7 +335,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 			HookWSASend();
 		}
 
-		MessageBoxW(NULL, L"hooked!", L"MinHook Sample", MB_OK);
+		//MessageBoxW(NULL, L"hooked!", L"MinHook Sample", MB_OK);
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
