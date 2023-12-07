@@ -1,22 +1,17 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
-#include <Windows.h>
+#include <windows.h>
+#include "include\detours.h"
 #include <WinSock2.h>
 #include <WS2tcpip.h>
-#include "MinHook.h"
 #include <fstream>
 #include <vector>
 #include <string>
 #include <locale>
 #include <codecvt>
 #include <winhttp.h>
-#pragma comment(lib, "ws2_32.lib")
-#if defined _M_X64
-#pragma comment(lib, "libMinHook.x64.lib")
-#elif defined _M_IX86
-#pragma comment(lib, "libMinHook.x86.lib")
-#endif
+
 void WriteToLogFile(std::string message);
 // 函数定义
 std::vector<std::string> getIPsByDomain(const char* domain) {
@@ -97,18 +92,6 @@ typedef int(WINAPI* OriginalSendTo)(SOCKET s, const char* buf, int len, int flag
 
 OriginalSendTo s_sendto1 = NULL;
 
-
-typedef int (WINAPI* WSASend_t)(
-	_In_  SOCKET                             s,
-	_In_  LPWSABUF                           lpBuffers,
-	_In_  DWORD                              dwBufferCount,
-	_Out_ LPDWORD                            lpNumberOfBytesSent,
-	_In_  DWORD                              dwFlags,
-	_In_  LPWSAOVERLAPPED                    lpOverlapped,
-	_In_  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
-	);
-// Function pointer for the original WSASend
-WSASend_t oWSASend = nullptr;
 void WriteToLogFile(std::string message)
 {
 	std::ofstream logfile("D:\\LogFile.txt", std::ios::app); // 打开文件，追加写入
@@ -231,31 +214,6 @@ void GetPeerInfo(SOCKET s, LPWSABUF  lpBuffers, DWORD dwBufferCount)
 		//WriteToLogFile("Failed to get peer information.");
 	}
 }
-// Custom implementation of WSASend
-int WINAPI MyWSASend(
-	_In_  SOCKET                             s,
-	_In_  LPWSABUF                           lpBuffers,
-	_In_  DWORD                              dwBufferCount,
-	_Out_ LPDWORD                            lpNumberOfBytesSent,
-	_In_  DWORD                              dwFlags,
-	_In_  LPWSAOVERLAPPED                    lpOverlapped,
-	_In_  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
-) {
-	// Your custom implementation goes here
-	//MessageBoxW(NULL, L"MyWSASend", L"MinHook Sample", MB_OK);
-	//WriteToLogFile("MyWSASend");
-	OutputDebugString("WSASend Hooked!\n");
-	GetPeerInfo(s, lpBuffers, dwBufferCount);
-	if (isMatched) { 
-		isMatched = false;
-		dwBufferCount = 0;
-	}
-
-
-	// Call the original WSASend
-
-	return oWSASend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine);
-}
 
 // 定义 sendto 的原始函数指针类型
 
@@ -267,82 +225,62 @@ int WINAPI HookedSendTo(SOCKET s, const char* buf, int len, int flags, const str
 	return originalSendTo(s, buf, len, flags, to, tolen);
 }
 
-BOOL HookWSASend()
-{
-	// Create a hook for MessageBoxW, in disabled state.
-	if (MH_CreateHook(&WSASend, &MyWSASend, reinterpret_cast<LPVOID*>(&oWSASend)) != MH_OK) {
-		return 1;
-	}
+// 定义函数指针类型，用于保存原始的 wsasend 函数
+typedef INT(PASCAL FAR* LPFN_WSASEND)(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+	LPDWORD lpNumberOfBytesSent, DWORD dwFlags, LPWSAOVERLAPPED lpOverlapped,
+	LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
 
-	// Enable the hook
-	if (MH_EnableHook(&WSASend) != MH_OK) {
-		return 1;
+// 声明原始的 wsasend 函数指针
+LPFN_WSASEND RealWsaSend = nullptr;
+
+// 自定义的 HookedWsaSend 函数
+INT PASCAL FAR HookedWsaSend(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+	LPDWORD lpNumberOfBytesSent, DWORD dwFlags, LPWSAOVERLAPPED lpOverlapped,
+	LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+{
+	GetPeerInfo(s, lpBuffers, dwBufferCount);
+	if (isMatched) {
+		isMatched = false;
+		dwBufferCount = 0;
 	}
+	// 调用原始的 wsasend 函数
+	INT result = RealWsaSend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine);
+
+	// 在这里可以添加你自己的逻辑
+
+	return result;
 }
 
-// 定义原始函数指针类型
-typedef HINTERNET(WINAPI* WinHttpOpenRequest_t)(HINTERNET hConnect, LPCWSTR pwszVerb, LPCWSTR pwszObjectName,
-	LPCWSTR pwszVersion, LPCWSTR pwszReferrer, LPCWSTR* ppwszAcceptTypes, DWORD dwFlags);
-
-// 原始函数指针
-WinHttpOpenRequest_t originalWinHttpOpenRequest = nullptr;
-
-// 自定义的 hook 函数
-HINTERNET WINAPI hookedWinHttpOpenRequest(HINTERNET hConnect, LPCWSTR pwszVerb, LPCWSTR pwszObjectName,
-	LPCWSTR pwszVersion, LPCWSTR pwszReferrer, LPCWSTR* ppwszAcceptTypes, DWORD dwFlags) {
-	// 在这里执行你的自定义逻辑
-	WriteToLogFile("hookedWinHttpOpenRequest");
-
-	// 调用原始函数
-	return originalWinHttpOpenRequest(hConnect, pwszVerb, pwszObjectName, pwszVersion, pwszReferrer, ppwszAcceptTypes, dwFlags);
-}
-
-BOOL HookWinHttpOpenRequest()
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
-	// 创建钩取点
-	if (MH_CreateHookApi(L"winhttp.dll", "WinHttpOpenRequest", &hookedWinHttpOpenRequest, reinterpret_cast<LPVOID*>(&originalWinHttpOpenRequest)) != MH_OK) {
-		return -1;
-	}
+	UNREFERENCED_PARAMETER(lpReserved);
 
-	// 启用钩取
-	if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
-		return -1;
-	}
-}
-
-BOOL APIENTRY DllMain(HMODULE hModule,
-	DWORD  ul_reason_for_call,
-	LPVOID lpReserved
-)
-{
-	int i = 1;
-	switch (ul_reason_for_call)
+	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
-	case DLL_PROCESS_ATTACH:
-		// Initialize MinHook.
-		MH_Initialize();
-		//MessageBox(NULL, "This Is From Dll!\nInject Success!", "OK", MB_OK);
-		switch (i) {
-		case 1:
-			HookWSASend();
-			break;
-		case 2:
-			HookWinHttpOpenRequest();
-			break;
-		case 3:
-			HookWSASend();
-			break;
-		default:
-			HookWSASend();
-		}
+		MessageBox(NULL, "This Is From Dll!\nInject Success!", "OK", MB_OK);
+		DetourTransactionBegin();
+		DetourUpdateThread(GetCurrentThread());
 
-		//MessageBoxW(NULL, L"hooked!", L"MinHook Sample", MB_OK);
-		break;
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		break;
+		// 获取原始 wsasend 函数的地址
+		RealWsaSend = (LPFN_WSASEND)GetProcAddress(GetModuleHandle("ws2_32.dll"), "WSASend");
+
+		// 对 wsasend 函数进行 Hook，将其替换为自定义的 HookedWsaSend 函数
+		DetourAttach(&(PVOID&)RealWsaSend, HookedWsaSend);
+
+		// 完成 Hook 事务
+		DetourTransactionCommit();
 	}
+	else if (ul_reason_for_call == DLL_PROCESS_DETACH)
+	{
+		//DetourTransactionBegin();
+		//DetourUpdateThread(GetCurrentThread());
+
+		//// 恢复原始的 wsasend 函数
+		//DetourDetach(&(PVOID&)RealWsaSend, HookedWsaSend);
+
+		//// 完成 Hook 事务
+		//DetourTransactionCommit();
+	}
+
 	return TRUE;
 }
-
