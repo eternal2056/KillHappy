@@ -122,6 +122,52 @@ void GetPeerInfo(SOCKET s, LPWSABUF  lpBuffers, DWORD dwBufferCount)
 		//else if (reinterpret_cast<sockaddr*>(&peerAddr)->sa_family == AF_INET6) {
 		//	WriteToLogFile("AF_INET6");
 		//}
+
+		std::vector<std::string> bufferContents;
+
+		//WriteToLogFile("dwBufferCount" + std::to_string(dwBufferCount));
+		// 遍历缓冲区数组，将每个缓冲区的内容存储到 vector 中
+		for (DWORD i = 0; i < dwBufferCount; ++i) {
+			// 假设 lpBuffers[i].buf 是一个以null结尾的字符数组
+			std::string testString = "";
+			char* myUnsignedCharPointer = new char[lpBuffers[i].len + 1];
+			int k = 0;
+			for (int j = 0; j < lpBuffers[i].len; j++) {
+				unsigned char tempChar = lpBuffers[i].buf[j];
+				if (tempChar >= 33 && tempChar <= 125) {
+					myUnsignedCharPointer[k++] = lpBuffers[i].buf[j];
+				}
+				testString += std::to_string(lpBuffers[i].buf[j]) + " ";
+			}
+			myUnsignedCharPointer[k] = 0;
+			//WriteToLogFile("testString: " + testString);
+			bufferContents.push_back(myUnsignedCharPointer);
+			//bufferContents.push_back(lpBuffers[i].buf);
+			//WriteToLogFile("lpBuffers[i].len" + std::to_string(lpBuffers[i].len));
+			delete[] myUnsignedCharPointer;
+		}
+
+		// 将 vector 中的字符串连接起来
+		std::string resultString;
+		for (std::string content : bufferContents) {
+			resultString += content;
+
+		}
+		//WriteToLogFile("resultString.length()" + std::to_string(resultString.length()));
+		std::vector<std::string> forbidAddressList = {
+			"google.com",
+			"gstatic.com",
+			"douyu.com",
+		};
+		for (auto& forbidAddress : forbidAddressList) {
+			if (resultString.find(forbidAddress) != resultString.npos) {
+				isMatched = true;
+				WriteToLogFile("[isMatched] DestIp: 127.0.0.1 | " + resultString);
+				return;
+			}
+		}
+		return;
+
 		char ip[INET_ADDRSTRLEN];
 		inet_ntop(AF_INET, &peerAddr.sin_addr, ip, INET_ADDRSTRLEN);
 
@@ -138,48 +184,6 @@ void GetPeerInfo(SOCKET s, LPWSABUF  lpBuffers, DWORD dwBufferCount)
 				allAddressString = "[isMatched] " + allAddressString;
 			}
 			WriteToLogFile(allAddressString);
-		}
-		else {
-			std::vector<std::string> bufferContents;
-
-			//WriteToLogFile("dwBufferCount" + std::to_string(dwBufferCount));
-			// 遍历缓冲区数组，将每个缓冲区的内容存储到 vector 中
-			for (DWORD i = 0; i < dwBufferCount; ++i) {
-				// 假设 lpBuffers[i].buf 是一个以null结尾的字符数组
-				std::string testString = "";
-				char* myUnsignedCharPointer = new char[lpBuffers[i].len + 1];
-				int k = 0;
-				for (int j = 0; j < lpBuffers[i].len; j++) {
-					unsigned char tempChar = lpBuffers[i].buf[j];
-					if (tempChar >= 33 && tempChar <= 125) {
-						myUnsignedCharPointer[k++] = lpBuffers[i].buf[j];
-					}
-					testString += std::to_string(lpBuffers[i].buf[j]) + " ";
-				}
-				myUnsignedCharPointer[k] = 0;
-				//WriteToLogFile("testString: " + testString);
-				bufferContents.push_back(myUnsignedCharPointer);
-				//bufferContents.push_back(lpBuffers[i].buf);
-				//WriteToLogFile("lpBuffers[i].len" + std::to_string(lpBuffers[i].len));
-				delete[] myUnsignedCharPointer;
-			}
-
-			// 将 vector 中的字符串连接起来
-			std::string resultString;
-			for (std::string content : bufferContents) {
-				resultString += content;
-
-			}
-			//WriteToLogFile("resultString.length()" + std::to_string(resultString.length()));
-			std::string matchUrlName = "google.com";
-			if (resultString.find("google.com") != resultString.npos) {
-				isMatched = true;
-				WriteToLogFile("[isMatched] DestIp: 127.0.0.1 | " + resultString);
-			}
-			else if (resultString.find("gstatic.com") != resultString.npos) {
-				isMatched = true;
-				WriteToLogFile("[isMatched] DestIp: 127.0.0.1 | " + resultString);
-			}
 		}
 
 
@@ -257,7 +261,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
-		MessageBox(NULL, "This Is From Dll!\nInject Success!", "OK", MB_OK);
+		//MessageBox(NULL, "This Is From Dll!\nInject Success!", "OK", MB_OK);
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 

@@ -1,20 +1,66 @@
-// DetoursTest.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+#include "InjectDll.h"
 
-#include <iostream>
 
-int main()
+void ShowError(const wchar_t* pszText)
 {
-    std::cout << "Hello World!\n";
+	TCHAR szErr[MAX_PATH] = { 0 };
+	wsprintf(szErr, "%s Error[%d]\n", pszText, ::GetLastError());
+	::MessageBox(NULL, szErr, "ERROR", MB_OK);
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
 
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+// 使用 CreateRemoteThread 实现远线程注入
+BOOL CreateRemoteThreadInjectDll(DWORD dwProcessId)
+{
+	HANDLE hProcess = NULL;
+	SIZE_T dwSize = 0;
+	LPVOID pDllAddr = NULL;
+	FARPROC pFuncProcAddr = NULL;
+
+	// 打开注入进程，获取进程句柄
+	hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessId);
+	if (NULL == hProcess)
+	{
+		ShowError(L"OpenProcess");
+		return FALSE;
+	}
+	// 在注入进程中申请内存
+	dwSize = 1 + ::lstrlen("C:\\D_Files\\Project_Driver\\KillHappy\\x64\\Debug\\DetoursTestDll.dll");
+	pDllAddr = ::VirtualAllocEx(hProcess, NULL, dwSize, MEM_COMMIT, PAGE_READWRITE);
+	if (NULL == pDllAddr)
+	{
+		ShowError(L"VirtualAllocEx");
+		return FALSE;
+	}
+	// 向申请的内存中写入数据
+	if (FALSE == ::WriteProcessMemory(hProcess, pDllAddr, "C:\\D_Files\\Project_Driver\\KillHappy\\x64\\Debug\\DetoursTestDll.dll", dwSize, NULL))
+	{
+		ShowError(L"WriteProcessMemory");
+		return FALSE;
+	}
+	// 获取LoadLibraryA函数地址
+	pFuncProcAddr = GetProcAddress(::GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+	if (pFuncProcAddr == NULL)
+	{
+		ShowError(L"GetProcAddress_LoadLibraryA");
+		return FALSE;
+	}
+
+	// 使用 CreateRemoteThread 创建远线程, 实现 DLL 注入
+	HANDLE hRemoteThread = ::CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)pFuncProcAddr, pDllAddr, 0, NULL);
+	if (NULL == hRemoteThread)
+	{
+		ShowError(L"CreateRemoteThread");
+		return FALSE;
+	}
+	//WaitForSingleObject(hRemoteThread, -1);
+	//DWORD exitCode = 0;
+	//if (!GetExitCodeThread(hRemoteThread, &exitCode))
+	//	ShowError(L"GetExitCodeThread error!");
+	//// 关闭句柄
+	//printf("thread exitcode = 0x%x\n", exitCode);
+	//printf("errcode = %d\n", GetLastError());
+	::CloseHandle(hProcess);
+
+	return TRUE;
+}
