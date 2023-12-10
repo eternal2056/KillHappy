@@ -10,7 +10,7 @@ void ShowError(const wchar_t* pszText)
 
 
 // 使用 CreateRemoteThread 实现远线程注入
-BOOL CreateRemoteThreadInjectDll(DWORD dwProcessId)
+BOOL CreateRemoteThreadInjectDll(DWORD dwProcessId, const char* dllPath)
 {
 	HANDLE hProcess = NULL;
 	SIZE_T dwSize = 0;
@@ -25,7 +25,7 @@ BOOL CreateRemoteThreadInjectDll(DWORD dwProcessId)
 		return FALSE;
 	}
 	// 在注入进程中申请内存
-	dwSize = 1 + ::lstrlen("C:\\D_Files\\Project_Driver\\KillHappy\\x64\\Debug\\DetoursTestDll.dll");
+	dwSize = 1 + ::lstrlen(dllPath);
 	pDllAddr = ::VirtualAllocEx(hProcess, NULL, dwSize, MEM_COMMIT, PAGE_READWRITE);
 	if (NULL == pDllAddr)
 	{
@@ -33,7 +33,7 @@ BOOL CreateRemoteThreadInjectDll(DWORD dwProcessId)
 		return FALSE;
 	}
 	// 向申请的内存中写入数据
-	if (FALSE == ::WriteProcessMemory(hProcess, pDllAddr, "C:\\D_Files\\Project_Driver\\KillHappy\\x64\\Debug\\DetoursTestDll.dll", dwSize, NULL))
+	if (FALSE == ::WriteProcessMemory(hProcess, pDllAddr, dllPath, dwSize, NULL))
 	{
 		ShowError(L"WriteProcessMemory");
 		return FALSE;

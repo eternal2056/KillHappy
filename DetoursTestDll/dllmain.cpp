@@ -1,4 +1,4 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
+ï»¿// dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
 #include <windows.h>
@@ -13,7 +13,28 @@
 #include <winhttp.h>
 
 void WriteToLogFile(std::string message);
-// º¯Êı¶¨Òå
+std::vector<std::string> forbidAddressList = {};
+void readAndPrintFile(const std::string& filePath) {
+	// æ‰“å¼€æ–‡ä»¶
+	std::ifstream inputFile(filePath);
+
+	// æ£€æŸ¥æ–‡ä»¶æ˜¯å¦æˆåŠŸæ‰“å¼€
+	if (!inputFile.is_open()) {
+		readAndPrintFile("Error opening file: ");
+		return;
+	}
+
+	// é€è¡Œè¯»å–æ–‡ä»¶å†…å®¹
+	std::string line;
+	while (std::getline(inputFile, line)) {
+		// å¤„ç†æ¯ä¸€è¡Œçš„æ•°æ®
+		forbidAddressList.push_back(line);
+	}
+
+	// å…³é—­æ–‡ä»¶
+	inputFile.close();
+}
+// å‡½æ•°å®šä¹‰
 std::vector<std::string> getIPsByDomain(const char* domain) {
 	std::vector<std::string> ipAddresses;
 
@@ -94,11 +115,11 @@ OriginalSendTo s_sendto1 = NULL;
 
 void WriteToLogFile(std::string message)
 {
-	std::ofstream logfile("D:\\LogFile.txt", std::ios::app); // ´ò¿ªÎÄ¼ş£¬×·¼ÓĞ´Èë
+	std::ofstream logfile("D:\\LogFile.txt", std::ios::app); // æ‰“å¼€æ–‡ä»¶ï¼Œè¿½åŠ å†™å…¥
 	if (logfile.is_open())
 	{
-		logfile << message << std::endl; // Ğ´ÈëĞÅÏ¢
-		logfile.close(); // ¹Ø±ÕÎÄ¼ş
+		logfile << message << std::endl; // å†™å…¥ä¿¡æ¯
+		logfile.close(); // å…³é—­æ–‡ä»¶
 	}
 }
 
@@ -113,7 +134,49 @@ void GetPeerInfo(SOCKET s, LPWSABUF  lpBuffers, DWORD dwBufferCount)
 	int addrv6Len = sizeof(peerAddr_v6);
 	std::string allAddressString;
 	std::vector<std::string> addressList;
-	addressList = getIPsByDomain(urlName);
+	//addressList = getIPsByDomain(urlName);
+
+	std::vector<std::string> bufferContents;
+
+	//WriteToLogFile("dwBufferCount" + std::to_string(dwBufferCount));
+	// éå†ç¼“å†²åŒºæ•°ç»„ï¼Œå°†æ¯ä¸ªç¼“å†²åŒºçš„å†…å®¹å­˜å‚¨åˆ° vector ä¸­
+	for (DWORD i = 0; i < dwBufferCount; ++i) {
+		// å‡è®¾ lpBuffers[i].buf æ˜¯ä¸€ä¸ªä»¥nullç»“å°¾çš„å­—ç¬¦æ•°ç»„
+		std::string testString = "";
+		char* myUnsignedCharPointer = new char[lpBuffers[i].len + 1];
+		int k = 0;
+		for (int j = 0; j < lpBuffers[i].len; j++) {
+			unsigned char tempChar = lpBuffers[i].buf[j];
+			if (tempChar >= 33 && tempChar <= 125) {
+				myUnsignedCharPointer[k++] = lpBuffers[i].buf[j];
+			}
+			testString += std::to_string(lpBuffers[i].buf[j]) + " ";
+		}
+		myUnsignedCharPointer[k] = 0;
+		//WriteToLogFile("testString: " + testString);
+		bufferContents.push_back(myUnsignedCharPointer);
+		//bufferContents.push_back(lpBuffers[i].buf);
+		//WriteToLogFile("lpBuffers[i].len" + std::to_string(lpBuffers[i].len));
+		delete[] myUnsignedCharPointer;
+	}
+
+	// å°† vector ä¸­çš„å­—ç¬¦ä¸²è¿æ¥èµ·æ¥
+	std::string resultString;
+	for (std::string content : bufferContents) {
+		resultString += content;
+
+	}
+	//WriteToLogFile("resultString.length()" + std::to_string(resultString.length()));
+
+	for (auto& forbidAddress : forbidAddressList) {
+		if (resultString.find(forbidAddress) != resultString.npos) {
+			isMatched = true;
+			WriteToLogFile("[isMatched] DestIp: 127.0.0.1 | " + resultString);
+			return;
+		}
+	}
+	return;
+
 	if (getpeername(s, reinterpret_cast<sockaddr*>(&peerAddr), &addrLen) == 0)
 	{
 		//if (reinterpret_cast<sockaddr*>(&peerAddr)->sa_family == AF_INET) {
@@ -122,52 +185,6 @@ void GetPeerInfo(SOCKET s, LPWSABUF  lpBuffers, DWORD dwBufferCount)
 		//else if (reinterpret_cast<sockaddr*>(&peerAddr)->sa_family == AF_INET6) {
 		//	WriteToLogFile("AF_INET6");
 		//}
-
-		std::vector<std::string> bufferContents;
-
-		//WriteToLogFile("dwBufferCount" + std::to_string(dwBufferCount));
-		// ±éÀú»º³åÇøÊı×é£¬½«Ã¿¸ö»º³åÇøµÄÄÚÈİ´æ´¢µ½ vector ÖĞ
-		for (DWORD i = 0; i < dwBufferCount; ++i) {
-			// ¼ÙÉè lpBuffers[i].buf ÊÇÒ»¸öÒÔnull½áÎ²µÄ×Ö·ûÊı×é
-			std::string testString = "";
-			char* myUnsignedCharPointer = new char[lpBuffers[i].len + 1];
-			int k = 0;
-			for (int j = 0; j < lpBuffers[i].len; j++) {
-				unsigned char tempChar = lpBuffers[i].buf[j];
-				if (tempChar >= 33 && tempChar <= 125) {
-					myUnsignedCharPointer[k++] = lpBuffers[i].buf[j];
-				}
-				testString += std::to_string(lpBuffers[i].buf[j]) + " ";
-			}
-			myUnsignedCharPointer[k] = 0;
-			//WriteToLogFile("testString: " + testString);
-			bufferContents.push_back(myUnsignedCharPointer);
-			//bufferContents.push_back(lpBuffers[i].buf);
-			//WriteToLogFile("lpBuffers[i].len" + std::to_string(lpBuffers[i].len));
-			delete[] myUnsignedCharPointer;
-		}
-
-		// ½« vector ÖĞµÄ×Ö·û´®Á¬½ÓÆğÀ´
-		std::string resultString;
-		for (std::string content : bufferContents) {
-			resultString += content;
-
-		}
-		//WriteToLogFile("resultString.length()" + std::to_string(resultString.length()));
-		std::vector<std::string> forbidAddressList = {
-			"google.com",
-			"gstatic.com",
-			"douyu.com",
-		};
-		for (auto& forbidAddress : forbidAddressList) {
-			if (resultString.find(forbidAddress) != resultString.npos) {
-				isMatched = true;
-				WriteToLogFile("[isMatched] DestIp: 127.0.0.1 | " + resultString);
-				return;
-			}
-		}
-		return;
-
 		char ip[INET_ADDRSTRLEN];
 		inet_ntop(AF_INET, &peerAddr.sin_addr, ip, INET_ADDRSTRLEN);
 
@@ -219,9 +236,9 @@ void GetPeerInfo(SOCKET s, LPWSABUF  lpBuffers, DWORD dwBufferCount)
 	}
 }
 
-// ¶¨Òå sendto µÄÔ­Ê¼º¯ÊıÖ¸ÕëÀàĞÍ
+// å®šä¹‰ sendto çš„åŸå§‹å‡½æ•°æŒ‡é’ˆç±»å‹
 
-// ¶¨Òå¹³×ÓºóµÄ»Øµ÷º¯Êı
+// å®šä¹‰é’©å­åçš„å›è°ƒå‡½æ•°
 int WINAPI HookedSendTo(SOCKET s, const char* buf, int len, int flags, const struct sockaddr* to, int tolen)
 {
 	//MessageBoxW(NULL, L"HookedSendTo", L"MinHook Sample", MB_OK);
@@ -229,15 +246,15 @@ int WINAPI HookedSendTo(SOCKET s, const char* buf, int len, int flags, const str
 	return originalSendTo(s, buf, len, flags, to, tolen);
 }
 
-// ¶¨Òåº¯ÊıÖ¸ÕëÀàĞÍ£¬ÓÃÓÚ±£´æÔ­Ê¼µÄ wsasend º¯Êı
+// å®šä¹‰å‡½æ•°æŒ‡é’ˆç±»å‹ï¼Œç”¨äºä¿å­˜åŸå§‹çš„ wsasend å‡½æ•°
 typedef INT(PASCAL FAR* LPFN_WSASEND)(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 	LPDWORD lpNumberOfBytesSent, DWORD dwFlags, LPWSAOVERLAPPED lpOverlapped,
 	LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
 
-// ÉùÃ÷Ô­Ê¼µÄ wsasend º¯ÊıÖ¸Õë
+// å£°æ˜åŸå§‹çš„ wsasend å‡½æ•°æŒ‡é’ˆ
 LPFN_WSASEND RealWsaSend = nullptr;
 
-// ×Ô¶¨ÒåµÄ HookedWsaSend º¯Êı
+// è‡ªå®šä¹‰çš„ HookedWsaSend å‡½æ•°
 INT PASCAL FAR HookedWsaSend(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 	LPDWORD lpNumberOfBytesSent, DWORD dwFlags, LPWSAOVERLAPPED lpOverlapped,
 	LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
@@ -247,10 +264,10 @@ INT PASCAL FAR HookedWsaSend(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 		isMatched = false;
 		dwBufferCount = 0;
 	}
-	// µ÷ÓÃÔ­Ê¼µÄ wsasend º¯Êı
+	// è°ƒç”¨åŸå§‹çš„ wsasend å‡½æ•°
 	INT result = RealWsaSend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine);
 
-	// ÔÚÕâÀï¿ÉÒÔÌí¼ÓÄã×Ô¼ºµÄÂß¼­
+	// åœ¨è¿™é‡Œå¯ä»¥æ·»åŠ ä½ è‡ªå·±çš„é€»è¾‘
 
 	return result;
 }
@@ -261,17 +278,18 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
+		readAndPrintFile("D:\\AddrList.txt");
 		//MessageBox(NULL, "This Is From Dll!\nInject Success!", "OK", MB_OK);
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 
-		// »ñÈ¡Ô­Ê¼ wsasend º¯ÊıµÄµØÖ·
+		// è·å–åŸå§‹ wsasend å‡½æ•°çš„åœ°å€
 		RealWsaSend = (LPFN_WSASEND)GetProcAddress(GetModuleHandle("ws2_32.dll"), "WSASend");
 
-		// ¶Ô wsasend º¯Êı½øĞĞ Hook£¬½«ÆäÌæ»»Îª×Ô¶¨ÒåµÄ HookedWsaSend º¯Êı
+		// å¯¹ wsasend å‡½æ•°è¿›è¡Œ Hookï¼Œå°†å…¶æ›¿æ¢ä¸ºè‡ªå®šä¹‰çš„ HookedWsaSend å‡½æ•°
 		DetourAttach(&(PVOID&)RealWsaSend, HookedWsaSend);
 
-		// Íê³É Hook ÊÂÎñ
+		// å®Œæˆ Hook äº‹åŠ¡
 		DetourTransactionCommit();
 	}
 	else if (ul_reason_for_call == DLL_PROCESS_DETACH)
@@ -279,10 +297,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		//DetourTransactionBegin();
 		//DetourUpdateThread(GetCurrentThread());
 
-		//// »Ö¸´Ô­Ê¼µÄ wsasend º¯Êı
+		//// æ¢å¤åŸå§‹çš„ wsasend å‡½æ•°
 		//DetourDetach(&(PVOID&)RealWsaSend, HookedWsaSend);
 
-		//// Íê³É Hook ÊÂÎñ
+		//// å®Œæˆ Hook äº‹åŠ¡
 		//DetourTransactionCommit();
 	}
 

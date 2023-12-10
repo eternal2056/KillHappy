@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 // 使用 CreateRemoteThread 实现远线程注入
-BOOL CreateRemoteThreadInjectDll(DWORD dwProcessId);
+BOOL CreateRemoteThreadInjectDll(DWORD dwProcessId, const char * dllPath);
 
 
 #endif
