@@ -64,3 +64,53 @@ BOOL CreateRemoteThreadInjectDll(DWORD dwProcessId, const char* dllPath)
 
 	return TRUE;
 }
+
+
+BOOL EjectDll(DWORD dwPID, const char* dllPath)
+{
+	BOOL bMore = FALSE, bFound = FALSE;
+	HANDLE hSnapshot, hProcess, hThread;
+	HMODULE hModule = NULL;
+	MODULEENTRY32 me = { sizeof(me) };
+	LPTHREAD_START_ROUTINE pThreadProc;
+
+	// dwPID = notepad 进程ID
+	// 使用TH32CS_SNAPMODULE参数，获取加载到notepad进程的DLL名称
+	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, dwPID);
+
+	bMore = Module32First(hSnapshot, &me);
+	for (; bMore; bMore = Module32Next(hSnapshot, &me))
+	{
+		if (!_tcsicmp((LPCTSTR)me.szModule, dllPath) ||
+			!_tcsicmp((LPCTSTR)me.szExePath, dllPath))
+		{
+			bFound = TRUE;
+			break;
+		}
+	}
+
+	if (!bFound)
+	{
+		CloseHandle(hSnapshot);
+		return FALSE;
+	}
+
+	if (!(hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwPID)))
+	{
+		return FALSE;
+	}
+
+	hModule = GetModuleHandle("kernel32.dll");
+	// 获取FreeLibrary函数加载地址，并使用CreateRemoteThread进行调用
+	pThreadProc = (LPTHREAD_START_ROUTINE)GetProcAddress(::GetModuleHandle("kernel32.dll"), "FreeLibrary");
+	hThread = CreateRemoteThread(hProcess, NULL, 0,
+		pThreadProc, me.modBaseAddr,
+		0, NULL);
+	WaitForSingleObject(hThread, INFINITE);
+
+	CloseHandle(hThread);
+	CloseHandle(hProcess);
+	CloseHandle(hSnapshot);
+
+	return TRUE;
+}
