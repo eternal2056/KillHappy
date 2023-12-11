@@ -43,7 +43,7 @@ int _tmain(int argc, _TCHAR* argv[])
 #else 
     std::vector<DWORD> allProcessId = GetChromeProcessIds("chrome.exe");
     for (auto& processId : allProcessId) {
-        BOOL bRet = CreateRemoteThreadInjectDll(processId, "D:\\Download\\Code\\WindowsDriver\\KillHappy\\x64\\Debug\\DetoursTestDll.dll");
+        BOOL bRet = CreateRemoteThreadInjectDll(processId, "C:\\D_Files\\Project_Driver\\KillHappy\\x64\\Debug\\ManagementDll.dll");
         if (bRet) printf("[%d] Inject Dll OK.\n", processId);
         else printf("[%d] Inject Dll Error.\n", processId);
     }
