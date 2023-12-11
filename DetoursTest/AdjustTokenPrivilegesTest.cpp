@@ -3,9 +3,9 @@
 
 void EP_ShowError(const wchar_t* pszText)
 {
-	TCHAR szErr[MAX_PATH] = { 0 };
-	::wsprintf(szErr, "%s Error[%d]\n", pszText, ::GetLastError());
-	::MessageBox(NULL, szErr, "ERROR", MB_OK);
+	//TCHAR szErr[MAX_PATH] = { 0 };
+	//::wsprintf(szErr, "%s Error[%d]\n", pszText, ::GetLastError());
+	//::MessageBox(NULL, szErr, "ERROR", MB_OK);
 }
 
 BOOL EnbalePrivileges(HANDLE hProcess)

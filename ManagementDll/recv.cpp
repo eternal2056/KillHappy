@@ -145,7 +145,7 @@ int WINAPI HookedRecv(SOCKET s, char* buf, int len, int flags) {
 		if (resultString.find(forbidAddress) != resultString.npos) {
 			isMatchedRecv = true;
 			WriteToLogFile("[isMatched][HookedRecv] DestIp: 127.0.0.1 | " + resultString);
-			return 1;
+			return SOCKET_ERROR;
 		}
 	}
 

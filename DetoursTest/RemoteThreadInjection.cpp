@@ -59,7 +59,24 @@ std::vector<DWORD> GetChromeProcessIds(const char * processName) {
     CloseHandle(snapshot);
     return chromeProcessIds;
 }
+bool IsProcessRunning(DWORD processId) {
+	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, processId);
+	if (hProcess == NULL) {
+		// Unable to open the process
+		return false;
+	}
 
+	DWORD exitCode;
+	if (GetExitCodeProcess(hProcess, &exitCode) && exitCode == STILL_ACTIVE) {
+		// Process is running
+		CloseHandle(hProcess);
+		return true;
+	}
+
+	// Process has exited
+	CloseHandle(hProcess);
+	return false;
+}
 int _tmain(int argc, _TCHAR* argv[])
 {
 	// 提升当前进程令牌权限
@@ -84,10 +101,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			for (auto& processName : processNameList) {
 				std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
 				for (auto& processId : allProcessId) {
-					if (isExistsModules(processId) == false) {
-						BOOL bRet = CreateRemoteThreadInjectDll(processId, "D:\\Download\\Code\\WindowsDriver\\KillHappy\\x64\\Debug\\ManagementDll.dll");
-						if (bRet) printf("[%s] [%d] Inject Dll OK.\n", processName.data(), processId);
-						else printf("[%s] [%d] Inject Dll Error.\n", processName.data(), processId);
+					if (IsProcessRunning(processId) == true) {
+						if (isExistsModules(processId) == false) {
+							BOOL bRet = CreateRemoteThreadInjectDll(processId, "D:\\Download\\Code\\WindowsDriver\\KillHappy\\x64\\Debug\\ManagementDll.dll");
+							if (bRet) printf("[%s] [%d] Inject Dll OK.\n", processName.data(), processId);
+							else printf("[%s] [%d] Inject Dll Error.\n", processName.data(), processId);
+						}
 					}
 				}
 			}
@@ -107,7 +126,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 		}
 	}
-	system("pause");
+	//system("pause");
 #endif
 	return 0;
 }

@@ -7,7 +7,7 @@ void WriteToLogFile(std::string message)
 	std::ofstream logfile("D:\\LogFile.txt", std::ios::app); // 打开文件，追加写入
 	if (logfile.is_open())
 	{
-		logfile << message << std::endl; // 写入信息
+		//logfile << message << std::endl; // 写入信息
 		logfile.close(); // 关闭文件
 	}
 }
