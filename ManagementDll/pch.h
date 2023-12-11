@@ -23,4 +23,9 @@ void readAndPrintFile(const std::string& filePath);
 void HookWsaSend();
 void HookCreateProcessW();
 void HookZwQuerySystemInformation();
+void HookRecv();
+void FreeWsaSend();
+void FreeCreateProcessW();
+void FreeZwQuerySystemInformation();
+void FreeRecv();
 #endif //PCH_H

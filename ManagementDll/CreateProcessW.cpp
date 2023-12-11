@@ -51,7 +51,7 @@ BOOL WINAPI MyCreateProcessW(
 	// 在这里可以插入你的自定义代码
 	// ...
 	std::string processPath = ConvertWideStringToNarrow(lpApplicationName);
-	if (processPath.find("YoudaoDict.exe") != processPath.npos) {
+	if (processPath.find("Telegram.exe") != processPath.npos) {
 		return FALSE;
 	}
 	WriteToLogFile(processPath);
@@ -75,6 +75,17 @@ void HookCreateProcessW() {
 
 	// 对 wsasend 函数进行 Hook，将其替换为自定义的 HookedWsaSend 函数
 	DetourAttach(&(PVOID&)TrueCreateProcessW, MyCreateProcessW);
+
+	// 完成 Hook 事务
+	DetourTransactionCommit();
+}
+
+void FreeCreateProcessW() {
+	DetourTransactionBegin();
+	DetourUpdateThread(GetCurrentThread());
+
+	// 恢复原始的 wsasend 函数
+	DetourDetach(&(PVOID&)TrueCreateProcessW, MyCreateProcessW);
 
 	// 完成 Hook 事务
 	DetourTransactionCommit();

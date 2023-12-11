@@ -11,11 +11,13 @@
 #include <string>
 #include <vector>
 #include <psapi.h>
+#include <chrono>
+#include <thread>
 
-void ListModules(DWORD processID) {
+BOOL isExistsModules(DWORD processID) {
 	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
 	if (hProcess == NULL) {
-		return;
+		return true;
 	}
 
 	HMODULE hModules[1024];
@@ -27,11 +29,16 @@ void ListModules(DWORD processID) {
 
 			// Get the full path to the module's file.
 			if (GetModuleFileNameEx(hProcess, hModules[i], szModName, sizeof(szModName) / sizeof(TCHAR))) {
+				std::string dllPath = szModName;
+				if (dllPath.find("ManagementDll") != dllPath.npos) {
+					return true;
+					printf(" [%s][%d] Inject Dll OK.\n", dllPath.data(), 1);
+				}
 			}
 		}
 	}
-
 	CloseHandle(hProcess);
+	return false;
 }
 std::vector<DWORD> GetChromeProcessIds(const char * processName) {
     std::vector<DWORD> chromeProcessIds;
@@ -58,6 +65,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	// 提升当前进程令牌权限
 	EnbalePrivileges(GetCurrentProcess());
 	std::string isInject = argv[1];
+	//std::string isInject = "0";
 
 	// 远线程注入 DLL
 #ifndef _WIN64
@@ -68,24 +76,34 @@ int _tmain(int argc, _TCHAR* argv[])
 		"explorer.exe",
 		"Taskmgr.exe",
 	};
-	printf(" [%s] Eject Dll OK.\n", isInject);
+	int i = 0;
+	
 	if (isInject == "1") {
-		for (auto& processName : processNameList) {
-			std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
-			for (auto& processId : allProcessId) {
-				BOOL bRet = CreateRemoteThreadInjectDll(processId, "D:\\Download\\Code\\WindowsDriver\\KillHappy\\x64\\Debug\\ManagementDll.dll");
-				if (bRet) printf("[%s] [%d] Inject Dll OK.\n", processName.data(), processId);
-				else printf("[%s] [%d] Inject Dll Error.\n", processName.data(), processId);
+		while (true) {
+			printf(" [%s][%d] Inject Dll OK.\n", isInject.data(), i++);
+			for (auto& processName : processNameList) {
+				std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
+				for (auto& processId : allProcessId) {
+					if (isExistsModules(processId) == false) {
+						BOOL bRet = CreateRemoteThreadInjectDll(processId, "D:\\Download\\Code\\WindowsDriver\\KillHappy\\x64\\Debug\\ManagementDll.dll");
+						if (bRet) printf("[%s] [%d] Inject Dll OK.\n", processName.data(), processId);
+						else printf("[%s] [%d] Inject Dll Error.\n", processName.data(), processId);
+					}
+				}
 			}
+			// 休眠1秒
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
 	else {
 		for (auto& processName : processNameList) {
 			std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
 			for (auto& processId : allProcessId) {
-				BOOL bRet = EjectDll(processId, "D:\\Download\\Code\\WindowsDriver\\KillHappy\\x64\\Debug\\ManagementDll.dll");
-				if (bRet) printf("[%s] [%d] Eject Dll OK.\n", processName.data(), processId);
-				else printf("[%s] [%d] Eject Dll Error.\n", processName.data(), processId);
+				if (isExistsModules(processId) == true) {
+					BOOL bRet = EjectDll(processId, "D:\\Download\\Code\\WindowsDriver\\KillHappy\\x64\\Debug\\ManagementDll.dll");
+					if (bRet) printf("[%s] [%d] Eject Dll OK.\n", processName.data(), processId);
+					else printf("[%s] [%d] Eject Dll Error.\n", processName.data(), processId);
+				}
 			}
 		}
 	}

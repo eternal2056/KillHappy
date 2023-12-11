@@ -79,3 +79,14 @@ void HookZwQuerySystemInformation() {
 	// 完成 Hook 事务
 	DetourTransactionCommit();
 }
+
+void FreeZwQuerySystemInformation() {
+	DetourTransactionBegin();
+	DetourUpdateThread(GetCurrentThread());
+
+	// 恢复原始的 wsasend 函数
+	DetourDetach(&(PVOID&)RealWsaSend, MyZwQuerySystemInformation);
+
+	// 完成 Hook 事务
+	DetourTransactionCommit();
+}
