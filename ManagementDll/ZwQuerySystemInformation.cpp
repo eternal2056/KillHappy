@@ -1,14 +1,14 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 
 
 VOID ShowError(PCHAR msg);
 DWORD WINAPI ThreadProc(LPVOID lpParameter);
-DWORD GetPid(PCHAR pProName); //¸ù¾İ½ø³ÌÃû»ñÈ¡ÒªÒş²ØµÄ½ø³ÌµÄPID
+DWORD GetPid(PCHAR pProName); //æ ¹æ®è¿›ç¨‹åè·å–è¦éšè—çš„è¿›ç¨‹çš„PID
 
-DWORD g_dwOrgAddr = 0;   //Ô­º¯ÊıµØÖ·
-CHAR g_szOrgBytes[5] = { 0 };  //±£´æº¯ÊıµÄÇ°Îå¸ö×Ö½Ú
-DWORD g_dwHidePID = 15460;   //ÒªÒş²ØµÄ½ø³ÌµÄPID
-// ¶¨Òåº¯ÊıÖ¸ÕëÀàĞÍ£¬ÓÃÓÚ±£´æÔ­Ê¼µÄ wsasend º¯Êı
+DWORD g_dwOrgAddr = 0;   //åŸå‡½æ•°åœ°å€
+CHAR g_szOrgBytes[5] = { 0 };  //ä¿å­˜å‡½æ•°çš„å‰äº”ä¸ªå­—èŠ‚
+DWORD g_dwHidePID = 15460;   //è¦éšè—çš„è¿›ç¨‹çš„PID
+// å®šä¹‰å‡½æ•°æŒ‡é’ˆç±»å‹ï¼Œç”¨äºä¿å­˜åŸå§‹çš„ wsasend å‡½æ•°
 typedef
 NTSTATUS
 (WINAPI* pfnZwQuerySystemInformation)(SYSTEM_INFORMATION_CLASS SystemInformationClass,
@@ -16,10 +16,30 @@ NTSTATUS
 	ULONG SystemInformationLength,
 	PULONG ReturnLength);
 
-// ÉùÃ÷Ô­Ê¼µÄ wsasend º¯ÊıÖ¸Õë
+// å£°æ˜åŸå§‹çš„ wsasend å‡½æ•°æŒ‡é’ˆ
 pfnZwQuerySystemInformation RealWsaSend = NULL;
+std::vector<DWORD> GetChromeProcessIds(const char* processName) {
+	std::vector<DWORD> chromeProcessIds;
 
-// ×Ô¶¨ÒåµÄ HookedWsaSend º¯Êı
+	PROCESSENTRY32 processEntry;
+	processEntry.dwSize = sizeof(PROCESSENTRY32);
+
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+	if (Process32First(snapshot, &processEntry)) {
+		do {
+			if (_stricmp(processEntry.szExeFile, processName) == 0) {
+				chromeProcessIds.push_back(processEntry.th32ProcessID);
+			}
+		} while (Process32Next(snapshot, &processEntry));
+	}
+
+	CloseHandle(snapshot);
+	return chromeProcessIds;
+}
+std::vector<DWORD> allProcessId;
+bool isMatchedName = false;
+// è‡ªå®šä¹‰çš„ HookedWsaSend å‡½æ•°
 NTSTATUS WINAPI MyZwQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass,
 	PVOID SystemInformation,
 	ULONG SystemInformationLength,
@@ -30,23 +50,30 @@ NTSTATUS WINAPI MyZwQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInform
 	pfnZwQuerySystemInformation dwOrgFuncAddr = 0;
 
 
-	//»ñÈ¡º¯ÊıµØÖ·
+	//è·å–å‡½æ•°åœ°å€
 	dwOrgFuncAddr = RealWsaSend;
 
 
 
 	status = ((pfnZwQuerySystemInformation)dwOrgFuncAddr)(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);
 
-	//ÅĞ¶Ïº¯ÊıÊÇ·ñµ÷ÓÃ³É¹¦£¬ÒÔ¼°ÊÇ·ñÊÇ²éÑ¯½ø³ÌµÄ²Ù×÷
+	//åˆ¤æ–­å‡½æ•°æ˜¯å¦è°ƒç”¨æˆåŠŸï¼Œä»¥åŠæ˜¯å¦æ˜¯æŸ¥è¯¢è¿›ç¨‹çš„æ“ä½œ
 	if (NT_SUCCESS(status) && SystemInformationClass == SystemProcessInformation)
 	{
 		pCur = (PSYSTEM_PROCESS_INFORMATION)SystemInformation;
 		while (TRUE)
 		{
-			//ÅĞ¶ÏÊÇ·ñÊÇÒªÒş²ØµÄ½ø³Ì
-			if (g_dwHidePID == (DWORD)pCur->UniqueProcessId)
+			isMatchedName = false;
+			for (auto& processId : allProcessId) {
+				if (processId == (DWORD)pCur->UniqueProcessId) {
+					isMatchedName = true;
+					break;
+				}
+			}
+			//åˆ¤æ–­æ˜¯å¦æ˜¯è¦éšè—çš„è¿›ç¨‹
+			if (isMatchedName)
 			{
-				//½«½ø³ÌÒş²ØÆğÀ´
+				//å°†è¿›ç¨‹éšè—èµ·æ¥
 				if (pPrev == NULL)   SystemInformation = (PBYTE)pCur + pCur->NextEntryOffset;
 				else if (pCur->NextEntryOffset == 0) pPrev->NextEntryOffset = 0;
 				else pPrev->NextEntryOffset += pCur->NextEntryOffset;
@@ -54,14 +81,14 @@ NTSTATUS WINAPI MyZwQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInform
 			}
 			else pPrev = pCur;
 
-			//Èç¹ûÃ»ÓĞÏÂÒ»¸ö³É¹¦ÔòÍË³ö 
+			//å¦‚æœæ²¡æœ‰ä¸‹ä¸€ä¸ªæˆåŠŸåˆ™é€€å‡º 
 			if (pCur->NextEntryOffset == 0) break;
 
-			//½«Ö¸ÕëÖ¸ÏòÏÂÒ»¸ö³ÉÔ±
+			//å°†æŒ‡é’ˆæŒ‡å‘ä¸‹ä¸€ä¸ªæˆå‘˜
 			pCur = (PSYSTEM_PROCESS_INFORMATION)((PBYTE)pCur + pCur->NextEntryOffset);
 		}
 	}
-	//ÖØĞÂHOOK
+	//é‡æ–°HOOK
 	return status;
 }
 
@@ -70,13 +97,16 @@ void HookZwQuerySystemInformation() {
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
-	// »ñÈ¡Ô­Ê¼ wsasend º¯ÊıµÄµØÖ·
+	// è·å–åŸå§‹ wsasend å‡½æ•°çš„åœ°å€
 	RealWsaSend = (pfnZwQuerySystemInformation)GetProcAddress(GetModuleHandle("ntdll.dll"), "ZwQuerySystemInformation");
 
-	// ¶Ô wsasend º¯Êı½øĞĞ Hook£¬½«ÆäÌæ»»Îª×Ô¶¨ÒåµÄ HookedWsaSend º¯Êı
+	// å¯¹ wsasend å‡½æ•°è¿›è¡Œ Hookï¼Œå°†å…¶æ›¿æ¢ä¸ºè‡ªå®šä¹‰çš„ HookedWsaSend å‡½æ•°
 	DetourAttach(&(PVOID&)RealWsaSend, MyZwQuerySystemInformation);
-
-	// Íê³É Hook ÊÂÎñ
+	allProcessId = GetChromeProcessIds("DetoursTest.exe");
+	for (auto& processId : allProcessId) {
+		WriteToLogFile(std::to_string(processId));
+	}
+	// å®Œæˆ Hook äº‹åŠ¡
 	DetourTransactionCommit();
 }
 
@@ -84,9 +114,9 @@ void FreeZwQuerySystemInformation() {
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
-	// »Ö¸´Ô­Ê¼µÄ wsasend º¯Êı
+	// æ¢å¤åŸå§‹çš„ wsasend å‡½æ•°
 	DetourDetach(&(PVOID&)RealWsaSend, MyZwQuerySystemInformation);
 
-	// Íê³É Hook ÊÂÎñ
+	// å®Œæˆ Hook äº‹åŠ¡
 	DetourTransactionCommit();
 }

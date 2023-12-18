@@ -79,6 +79,9 @@ bool IsProcessRunning(DWORD processId) {
 }
 int _tmain(int argc, _TCHAR* argv[])
 {
+	HWND hwnd = GetConsoleWindow();
+	// 隐藏控制台窗口
+	ShowWindow(hwnd, SW_HIDE);
 	// 提升当前进程令牌权限
 	EnbalePrivileges(GetCurrentProcess());
 	std::string isInject = argv[1];
