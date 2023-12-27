@@ -14,6 +14,24 @@
 #include <chrono>
 #include <thread>
 
+std::string getCurrentDirectoryPath() {
+	const DWORD bufferSize = MAX_PATH;
+	char buffer[bufferSize];
+
+	// 获取当前工作目录
+	DWORD length = GetCurrentDirectory(bufferSize, buffer);
+
+	if (length == 0) {
+		// 获取失败
+		return "";
+	}
+
+	// 将当前工作目录输出到标准输出
+	std::string str = buffer;
+
+	return str;
+}
+
 BOOL isExistsModules(DWORD processID) {
 	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
 	if (hProcess == NULL) {
