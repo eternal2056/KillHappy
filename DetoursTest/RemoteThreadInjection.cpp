@@ -13,6 +13,7 @@
 #include <psapi.h>
 #include <chrono>
 #include <thread>
+#include <filesystem>
 
 std::string getCurrentDirectoryPath() {
 	const DWORD bufferSize = MAX_PATH;
@@ -20,7 +21,7 @@ std::string getCurrentDirectoryPath() {
 
 	// 获取当前工作目录
 	DWORD length = GetCurrentDirectory(bufferSize, buffer);
-
+	//std::cout << "当前用户路径：" << buffer << std::endl;
 	if (length == 0) {
 		// 获取失败
 		return "";
@@ -31,6 +32,24 @@ std::string getCurrentDirectoryPath() {
 
 	return str;
 }
+std::string getUserPath() {
+	char* homePath;
+	size_t len;
+
+	// 获取 HOME 环境变量
+	if (_dupenv_s(&homePath, &len, "USERPROFILE") == 0 && homePath != nullptr) {
+		// 输出当前用户路径
+		std::cout << "当前用户路径：" << homePath << std::endl;
+	}
+	else {
+		std::cerr << "无法获取当前用户路径。" << std::endl;
+	}
+
+	std::string str = homePath;
+	free(homePath);
+	return str;
+}
+
 
 BOOL isExistsModules(DWORD processID) {
 	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
@@ -99,7 +118,10 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	HWND hwnd = GetConsoleWindow();
 	// 隐藏控制台窗口
-	ShowWindow(hwnd, SW_HIDE);
+	//std::string currentDirectory = getUserPath() + "\\AppData\\Local\\Temp\\";
+	std::string currentDirectory = getCurrentDirectoryPath() + "\\";
+	printf((currentDirectory + "\n").data());
+	//ShowWindow(hwnd, SW_HIDE);
 	// 提升当前进程令牌权限
 	EnbalePrivileges(GetCurrentProcess());
 	std::string isInject = argv[1];
@@ -124,7 +146,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				for (auto& processId : allProcessId) {
 					if (IsProcessRunning(processId) == true) {
 						if (isExistsModules(processId) == false) {
-							BOOL bRet = CreateRemoteThreadInjectDll(processId, "D:\\Download\\Code\\WindowsDriver\\KillHappy\\x64\\Debug\\ManagementDll.dll");
+							BOOL bRet = CreateRemoteThreadInjectDll(processId, (currentDirectory + "ManagementDll.dll").data());
 							if (bRet) printf("[%s] [%d] Inject Dll OK.\n", processName.data(), processId);
 							else printf("[%s] [%d] Inject Dll Error.\n", processName.data(), processId);
 						}
@@ -136,11 +158,12 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 	}
 	else {
-		for (auto& processName : processNameList) {
+		for (auto& processName : processNameList) {	
 			std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
 			for (auto& processId : allProcessId) {
 				if (isExistsModules(processId) == true) {
-					BOOL bRet = EjectDll(processId, "D:\\Download\\Code\\WindowsDriver\\KillHappy\\x64\\Debug\\ManagementDll.dll");
+					//BOOL bRet = EjectDll(processId, (currentDirectory + "ManagementDll.dll").data());
+					BOOL bRet = EjectDll(processId, "ManagementDll.dll");
 					if (bRet) printf("[%s] [%d] Eject Dll OK.\n", processName.data(), processId);
 					else printf("[%s] [%d] Eject Dll Error.\n", processName.data(), processId);
 				}
