@@ -218,7 +218,9 @@ INT PASCAL FAR HookedWsaSend(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 }
 
 void HookWsaSend() {
-	readAndPrintFile("D:\\AddrList.txt");
+	extern std::string currentDirectory;
+	readAndPrintFile(currentDirectory + "\\AddrList.txt");
+	//readAndPrintFile("C:\\D_Files\\Project_Driver\\KillHappy\\x64\\Debug\\AddrList.txt");
 	//MessageBox(NULL, "This Is From Dll!\nInject Success!", "OK", MB_OK);
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());

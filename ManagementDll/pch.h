@@ -28,4 +28,6 @@ void FreeWsaSend();
 void FreeCreateProcessW();
 void FreeZwQuerySystemInformation();
 void FreeRecv();
+std::string getUserPath();
+std::string getModulePath(HMODULE hModule);
 #endif //PCH_H

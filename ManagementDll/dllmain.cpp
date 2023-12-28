@@ -14,6 +14,10 @@ extern "C" __declspec(dllexport) void UnloadDll()
 }
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
+	extern std::string currentDirectory;
+	MessageBox(NULL, "DLL_PROCESS_DETACH", "OK", MB_OK);
+	//currentDirectory = getUserPath() + "\\AppData\\Local\\Temp\\";
+	currentDirectory = getModulePath(hModule);
 	UNREFERENCED_PARAMETER(lpReserved);
 
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
