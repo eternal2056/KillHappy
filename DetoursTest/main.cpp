@@ -5,8 +5,8 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	HWND hwnd = GetConsoleWindow();
 	//ShowWindow(hwnd, SW_HIDE); // 隐藏控制台窗口
-
-	InjectionFunction(argv); // 注入
+	AutoStartPrepare(); // 自动启动
+	//InjectionFunction(argv); // 注入
 
 	return 0;
 }

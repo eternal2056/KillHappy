@@ -15,3 +15,4 @@
 #include "InjectDll.h"
 #include "AdjustTokenPrivilegesTest.h"
 #include "RemoteThreadInjection.h"
+#include "AutoStart.h"
