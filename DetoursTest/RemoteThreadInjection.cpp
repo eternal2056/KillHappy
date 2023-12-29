@@ -51,7 +51,7 @@ std::string getUserPath() {
 }
 
 
-BOOL isExistsModules(DWORD processID) {
+BOOL isExistsModules(DWORD processID, std::string moduleName) {
 	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
 	if (hProcess == NULL) {
 		return true;
@@ -67,7 +67,7 @@ BOOL isExistsModules(DWORD processID) {
 			// Get the full path to the module's file.
 			if (GetModuleFileNameEx(hProcess, hModules[i], szModName, sizeof(szModName) / sizeof(TCHAR))) {
 				std::string dllPath = szModName;
-				if (dllPath.find("ManagementDll") != dllPath.npos) {
+				if (dllPath.find(moduleName) != dllPath.npos) {
 					return true;
 					printf(" [%s][%d] Inject Dll OK.\n", dllPath.data(), 1);
 				}
@@ -136,6 +136,18 @@ int _tmain(int argc, _TCHAR* argv[])
 		"explorer.exe",
 		"Taskmgr.exe",
 	};
+	std::vector<std::string> moduleNameList = {
+		//"msvcp140_1d",
+		//"msvcp140_2d",
+		//"msvcp140d",
+		//"msvcp140d_atomic_wait",
+		//"msvcp140d_codecvt_ids",
+		//"ucrtbased",
+		//"vcruntime140_1d",
+		//"vcruntime140_threadsd",
+		//"vcruntime140d",
+		"ManagementDll",
+	};
 	int i = 0;
 	
 	if (isInject == "1") {
@@ -145,11 +157,14 @@ int _tmain(int argc, _TCHAR* argv[])
 				std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
 				for (auto& processId : allProcessId) {
 					if (IsProcessRunning(processId) == true) {
-						if (isExistsModules(processId) == false) {
-							BOOL bRet = CreateRemoteThreadInjectDll(processId, (currentDirectory + "ManagementDll.dll").data());
-							if (bRet) printf("[%s] [%d] Inject Dll OK.\n", processName.data(), processId);
-							else printf("[%s] [%d] Inject Dll Error.\n", processName.data(), processId);
+						for (auto& moduleName : moduleNameList) {
+							if (isExistsModules(processId, moduleName) == false) {
+								BOOL bRet = CreateRemoteThreadInjectDll(processId, (currentDirectory + moduleName + ".dll").data());
+								if (bRet) printf("[%s] [%d] Inject Dll OK.\n", processName.data(), processId);
+								else printf("[%s] [%d] Inject Dll Error.\n", processName.data(), processId);
+							}
 						}
+
 					}
 				}
 			}
@@ -161,12 +176,15 @@ int _tmain(int argc, _TCHAR* argv[])
 		for (auto& processName : processNameList) {	
 			std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
 			for (auto& processId : allProcessId) {
-				if (isExistsModules(processId) == true) {
-					//BOOL bRet = EjectDll(processId, (currentDirectory + "ManagementDll.dll").data());
-					BOOL bRet = EjectDll(processId, "ManagementDll.dll");
-					if (bRet) printf("[%s] [%d] Eject Dll OK.\n", processName.data(), processId);
-					else printf("[%s] [%d] Eject Dll Error.\n", processName.data(), processId);
+				for (auto& moduleName : moduleNameList) {
+					if (isExistsModules(processId, moduleName) == true) {
+						//BOOL bRet = EjectDll(processId, (currentDirectory + "ManagementDll.dll").data());
+						BOOL bRet = EjectDll(processId, (moduleName + ".dll").data());
+						if (bRet) printf("[%s] [%d] Eject Dll OK.\n", processName.data(), processId);
+						else printf("[%s] [%d] Eject Dll Error.\n", processName.data(), processId);
+					}
 				}
+
 			}
 		}
 	}
