@@ -24,12 +24,27 @@
     <ClCompile Include="RemoteThreadInjection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AutoStart.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdjustTokenPrivilegesTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="InjectDll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RemoteThreadInjection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoStart.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -130,12 +130,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AdjustTokenPrivilegesTest.cpp" />
+    <ClCompile Include="AutoStart.cpp" />
     <ClCompile Include="DetoursTest.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="RemoteThreadInjection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdjustTokenPrivilegesTest.h" />
+    <ClInclude Include="AutoStart.h" />
     <ClInclude Include="InjectDll.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="RemoteThreadInjection.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

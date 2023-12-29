@@ -1,19 +1,4 @@
-// CreateRemoteThread_Test.cpp : 定义控制台应用程序的入口点。
-//
-#include <SDKDDKVer.h>
-#include <stdio.h>
-#include <tchar.h>
-#include "InjectDll.h"
-#include "AdjustTokenPrivilegesTest.h"
-#include <windows.h>
-#include <tlhelp32.h>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <psapi.h>
-#include <chrono>
-#include <thread>
-#include <filesystem>
+#include "RemoteThreadInjection.h"
 
 std::string getCurrentDirectoryPath() {
 	const DWORD bufferSize = MAX_PATH;
@@ -77,24 +62,24 @@ BOOL isExistsModules(DWORD processID, std::string moduleName) {
 	CloseHandle(hProcess);
 	return false;
 }
-std::vector<DWORD> GetChromeProcessIds(const char * processName) {
-    std::vector<DWORD> chromeProcessIds;
+std::vector<DWORD> GetChromeProcessIds(const char* processName) {
+	std::vector<DWORD> chromeProcessIds;
 
-    PROCESSENTRY32 processEntry;
-    processEntry.dwSize = sizeof(PROCESSENTRY32);
+	PROCESSENTRY32 processEntry;
+	processEntry.dwSize = sizeof(PROCESSENTRY32);
 
-    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
-    if (Process32First(snapshot, &processEntry)) {
-        do {
-            if (_stricmp(processEntry.szExeFile, processName) == 0) {
-                chromeProcessIds.push_back(processEntry.th32ProcessID);
-            }
-        } while (Process32Next(snapshot, &processEntry));
-    }
+	if (Process32First(snapshot, &processEntry)) {
+		do {
+			if (_stricmp(processEntry.szExeFile, processName) == 0) {
+				chromeProcessIds.push_back(processEntry.th32ProcessID);
+			}
+		} while (Process32Next(snapshot, &processEntry));
+	}
 
-    CloseHandle(snapshot);
-    return chromeProcessIds;
+	CloseHandle(snapshot);
+	return chromeProcessIds;
 }
 bool IsProcessRunning(DWORD processId) {
 	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, processId);
@@ -114,14 +99,11 @@ bool IsProcessRunning(DWORD processId) {
 	CloseHandle(hProcess);
 	return false;
 }
-int _tmain(int argc, _TCHAR* argv[])
-{
-	HWND hwnd = GetConsoleWindow();
-	// 隐藏控制台窗口
+
+void InjectionFunction(_TCHAR* argv[]) {
 	//std::string currentDirectory = getUserPath() + "\\AppData\\Local\\Temp\\";
 	std::string currentDirectory = getCurrentDirectoryPath() + "\\";
 	printf((currentDirectory + "\n").data());
-	//ShowWindow(hwnd, SW_HIDE);
 	// 提升当前进程令牌权限
 	EnbalePrivileges(GetCurrentProcess());
 	std::string isInject = argv[1];
@@ -149,7 +131,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		"ManagementDll",
 	};
 	int i = 0;
-	
+
 	if (isInject == "1") {
 		while (true) {
 			printf(" [%s][%d] Inject Dll OK.\n", isInject.data(), i++);
@@ -173,7 +155,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 	}
 	else {
-		for (auto& processName : processNameList) {	
+		for (auto& processName : processNameList) {
 			std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
 			for (auto& processId : allProcessId) {
 				for (auto& moduleName : moduleNameList) {
@@ -190,6 +172,4 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	//system("pause");
 #endif
-	return 0;
 }
-
