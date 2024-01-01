@@ -1,5 +1,7 @@
 #pragma once
 
+#define INITGUID
+#include <shobjidl.h> 
 #include <SDKDDKVer.h>
 #include <stdio.h>
 #include <tchar.h>
