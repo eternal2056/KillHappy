@@ -1,5 +1,9 @@
 #pragma once
-
+#ifdef NDEBUG
+#define IS_SHOW_WINDOW FALSE
+#else
+#define IS_SHOW_WINDOW TRUE
+#endif
 #define INITGUID
 #include <shobjidl.h> 
 #include <SDKDDKVer.h>

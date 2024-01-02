@@ -90,7 +90,7 @@ void AutoStartPrepare(std::string directory) {
     //DWORD bufferSize = sizeof(buffer);
     //RegistryHelper::ReadRegistryValue(HKEY_LOCAL_MACHINE, "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\sfweff", "FontSize", buffer, bufferSize);
 
-    std::string exePath = "\"" + directory + "\\1.exe\" 1";
+    std::string exePath = "\"" + directory + "\\1.exe\" 1 " + std::to_string(IS_SHOW_WINDOW); // 1-×¢Èë 0-°Î³ö | 1-ÏÔÊ¾ 0-Òþ²Ø
     const char *buffer = exePath.data();
 
     DWORD bufferSize = sizeof(buffer);

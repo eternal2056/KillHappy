@@ -1,6 +1,7 @@
 // CreateRemoteThread_Test.cpp : 定义控制台应用程序的入口点。
 #include "main.h"
-#define IS_SHOW_WINDOW TRUE
+
+
 
 std::string getParentDirectory(const std::string& path) {
     // 找到最后一个路径分隔符'\'
@@ -21,7 +22,7 @@ int _tmain(int argc, _TCHAR* argv[])
     std::string isInject = argv[1];
     std::string currentDirectory = getCurrentDirectoryPath();
     std::string currentDirectoryParent = getParentDirectory(currentDirectory);
-    
+
     HWND hwnd = GetConsoleWindow();
     if (IS_SHOW_WINDOW) {
         ShowWindow(hwnd, SW_NORMAL);
