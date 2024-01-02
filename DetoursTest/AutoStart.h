@@ -1,4 +1,4 @@
 #pragma once
 #include "main.h"
 
-void AutoStartPrepare();
+void AutoStartPrepare(std::string directory);

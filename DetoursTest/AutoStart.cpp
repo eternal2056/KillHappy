@@ -84,18 +84,17 @@ public:
 //    }
 //}
 
-void AutoStartPrepare() {
+void AutoStartPrepare(std::string directory) {
     // ¶ÁÈ¡×¢²á±íÖµ
     //char buffer[1024];
     //DWORD bufferSize = sizeof(buffer);
     //RegistryHelper::ReadRegistryValue(HKEY_LOCAL_MACHINE, "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\sfweff", "FontSize", buffer, bufferSize);
 
-    char buffer[] = "\"C:\\HOME_NGQ\\DetoursTest.exe\" 1";
+    std::string exePath = "\"" + directory + "\\1.exe\" 1";
+    const char *buffer = exePath.data();
+
     DWORD bufferSize = sizeof(buffer);
-    while (true) {
-        RegistryHelper::WriteRegistryValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MyTest", buffer);
-        RegistryHelper::WriteRegistryValue(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MyTest", buffer);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    RegistryHelper::WriteRegistryValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MyTest", buffer);
+    RegistryHelper::WriteRegistryValue(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MyTest", buffer);
     //CreateShortCut();
 }

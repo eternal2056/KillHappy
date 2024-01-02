@@ -100,13 +100,11 @@ bool IsProcessRunning(DWORD processId) {
 	return false;
 }
 
-void InjectionFunction(_TCHAR* argv[]) {
+void InjectionFunction(std::string isInject) {
 	//std::string currentDirectory = getUserPath() + "\\AppData\\Local\\Temp\\";
 	std::string currentDirectory = getCurrentDirectoryPath() + "\\";
 	printf((currentDirectory + "\n").data());
-	// 提升当前进程令牌权限
-	EnbalePrivileges(GetCurrentProcess());
-	std::string isInject = argv[1];
+
 	//std::string isInject = "0";
 
 	// 远线程注入 DLL
@@ -133,25 +131,20 @@ void InjectionFunction(_TCHAR* argv[]) {
 	int i = 0;
 
 	if (isInject == "1") {
-		while (true) {
-			printf(" [%s][%d] Inject Dll OK.\n", isInject.data(), i++);
-			for (auto& processName : processNameList) {
-				std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
-				for (auto& processId : allProcessId) {
-					if (IsProcessRunning(processId) == true) {
-						for (auto& moduleName : moduleNameList) {
-							if (isExistsModules(processId, moduleName) == false) {
-								BOOL bRet = CreateRemoteThreadInjectDll(processId, (currentDirectory + moduleName + ".dll").data());
-								if (bRet) printf("[%s] [%d] Inject Dll OK.\n", processName.data(), processId);
-								else printf("[%s] [%d] Inject Dll Error.\n", processName.data(), processId);
-							}
+		printf(" [%s][%d] Inject Dll OK.\n", isInject.data(), i++);
+		for (auto& processName : processNameList) {
+			std::vector<DWORD> allProcessId = GetChromeProcessIds(processName.data());
+			for (auto& processId : allProcessId) {
+				if (IsProcessRunning(processId) == true) {
+					for (auto& moduleName : moduleNameList) {
+						if (isExistsModules(processId, moduleName) == false) {
+							BOOL bRet = CreateRemoteThreadInjectDll(processId, (currentDirectory + moduleName + ".dll").data());
+							if (bRet) printf("[%s] [%d] Inject Dll OK.\n", processName.data(), processId);
+							else printf("[%s] [%d] Inject Dll Error.\n", processName.data(), processId);
 						}
-
 					}
 				}
 			}
-			// 休眠1秒
-			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
 	else {
